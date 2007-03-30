@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts -cpp #-}
+{-# OPTIONS -fglasgow-exts #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -42,13 +42,13 @@ newtype Compose g f a = Comp { unComp :: g (f a) }
 
 -- | Apply a function within the 'Comp' constructor.
 onComp :: (g (f a) -> g' (f' a')) -> ((Compose g f) a -> (Compose g' f') a')
-onComp h (Comp gfa) = Comp (h gfa)
+onComp h = Comp . h . unComp
 
 instance (Functor g, Functor f) => Functor (Compose g f) where
   fmap h (Comp gf) = Comp (fmap (fmap h) gf)
 
 instance (Applicative g, Applicative f) => Applicative (Compose g f) where
-  pure                   = Comp . pure . pure
+  pure                     = Comp . pure . pure
   Comp getf <*> Comp getx  = Comp (liftA2 (<*>) getf getx)
 
 -- instance (Functor g, Cofunctor f) => Cofunctor (Compose g f) where
@@ -96,6 +96,11 @@ instance (ArrowLoop (~>), Applicative f) => ArrowLoop (ArrowAp (~>) f) where
 -- violates the \"extension\" law and causes repeated execution.  Look for
 -- a reformulation or a clarification of required properties of the
 -- applicative functor @f@.
+-- 
+-- See also "Arrows and Computation", which notes that the following type
+-- is "almost an arrow" (http://www.soi.city.ac.uk/~ross/papers/fop.html).
+-- 
+-- > newtype ListMap i o = LM ([i] -> [o])
 
 mergeA :: Applicative f => (f a, f b) -> f (a,b)
 mergeA ~(fa,fb) = liftA2 (,) fa fb
