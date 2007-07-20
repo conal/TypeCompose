@@ -16,9 +16,9 @@
 module Control.DataDriven
   (
   -- * Plumbing for \"events\" and subscription 
-    Sink, Updater, News
+    Sink, Action, News
   -- * Data-driven computations
-  , DataDrivenG, dd, mapSrc
+  , DataDrivenG, dd, mapCur
   , DataDriven, runDD, joinDD
   ) where
 
@@ -36,14 +36,14 @@ import Control.Compose
 ----------------------------------------------------------}
 
 -- | Sinks (consumers) of values
-type Sink src a = a -> Updater src
+type Sink cur a = a -> Action cur
 
--- | Updaters (actions)
-type Updater src = src ()
+-- | Actions
+type Action cur = cur ()
 
 -- | News publisher -- somewhere to register updaters to be executed
 -- when events occur.
-type News src = Sink src (Updater src)
+type News cur = Sink cur (Action cur)
 
 
 {----------------------------------------------------------
@@ -51,40 +51,46 @@ type News src = Sink src (Updater src)
 ----------------------------------------------------------}
 
 -- | The general type of data-driven computations.  Represented as a
--- /news/ publisher (@news@) and a source of new values (@src@).  Clients
+-- /news/ publisher (@news@) and a way to get new values (@cur@).  Clients
 -- interested in the value subscribe to @news@ and extract a new value
--- from @src@ when notified that the value may have changed.  When @news@
--- is a monoid and @src@ is an applicative functor, @DataDriven news src@
+-- from @cur@ when notified that the value may have changed.  When @news@
+-- is a monoid and @cur@ is an applicative functor, @DataDrivenG news cur@
 -- is an applicative functor also.  The applicative property is very
 -- convenient for composition.  See the more specific type 'DataDriven'.
+--
+-- Nicer, but Haddock chokes on the infix op:
+--   type DataDrivenG news cur = ((,) news) `O` cur
 
-type DataDrivenG news src = Compose ((,) news) src
+type DataDrivenG news cur = O ((,) news) cur
+
+-- More tersely :
+-- type DataDrivenG news = O ((,) news)
 
 -- | Construct a data-driven computation from a subscription service
 -- (@Monoid@) and a value source subscriber (@Applicative@).
-dd :: news -> src a -> DataDrivenG news src a
-dd = curry Comp
+dd :: cur a -> news -> DataDrivenG news cur a
+dd = flip (curry O)
 
 -- | Modify the source part of a 'DataDriven' computation.
-mapSrc :: (src a -> src b) -> (DataDrivenG news src a -> DataDrivenG news src b)
-mapSrc f = onComp (second f)
+mapCur :: (cur a -> cur b) -> (DataDrivenG news cur a -> DataDrivenG news cur b)
+mapCur f = inO (second f)
 
 
 -- | Data driven with news publisher
-type DataDriven src = DataDrivenG (News src) src
+type DataDriven cur = DataDrivenG (News cur) cur
 
 
 -- | Run a unit-valued 'DataDriven' computation.  Causes the source to be
 -- executed /and/ registered with the subscriber.
-runDD :: (Monoid (Updater src), Applicative src)
-      => DataDriven src () -> Updater src
-runDD (Comp (news,src)) = news src `mappend` src
+runDD :: (Monoid (Action cur), Applicative cur)
+      => DataDriven cur () -> Action cur
+runDD (O (news,cur)) = news cur `mappend` cur
 
 -- | Apply 'join' to a source
-joinDD :: Monad src => DataDriven src (src a) -> DataDriven src a
-joinDD = mapSrc join
+joinDD :: Monad cur => DataDriven cur (cur a) -> DataDriven cur a
+joinDD = mapCur join
 
--- runDDJoin :: (Monad src, Applicative src, Monoid (Updater src))
---           => DataDriven src (Updater src) -> Updater src
+-- runDDJoin :: (Monad cur, Applicative cur, Monoid (Action cur))
+--           => DataDriven cur (Action cur) -> Action cur
 -- runDDJoin = runDD . joinDD
 

@@ -1,1 +1,10 @@
-
+Version 0.1:
+* Renamed "Compose/Comp/unComp" to "O/O/unO".
+* Renamed "onComp" to "inO"
+* Renamed "mapSrc" to "mapCur", and renamed type parameter "src" to "cur",
+  to avoid confusion with "Source" in Phooey's use of DataDriven.
+* Swapped argument order to dd in DataDriven.
+* Renamed "Updater" to "Action"
+* Changed the Monoid (IO a) instance in Control.Instances to use "liftA2
+  mappend" instead of "(*>)".
+* Added unFlip, inFlip, inFlip2

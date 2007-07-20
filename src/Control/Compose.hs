@@ -18,9 +18,9 @@
 
 module Control.Compose
   ( Cofunctor(..)
-  , Compose(..), onComp
+  , O(..), inO
   , StaticArrow(..)
-  , Flip(..)
+  , Flip(..), inFlip, inFlip2
   , ArrowAp(..)
   , App(..)
   ) where
@@ -33,36 +33,38 @@ import Data.Monoid
 class Cofunctor acc where
   cofmap :: (a -> b) -> (acc b -> acc a)
 
-
--- | Composition of type constructors: unary & unary.  Called \"g . f\" in
+-- | Composition of type constructors: unary & unary.  Called \"@g . f@\" in
 -- [1], section 5, but GHC won't parse that, nor will it parse any infix
 -- type operators in an export list.  Haddock won't parse any type infixes
--- at all.
-newtype Compose g f a = Comp { unComp :: g (f a) }
+-- at all.  Meant to be used infix when Haddock is up to it or not involved.
+newtype O g f a = O { unO :: g (f a) }
 
--- | Apply a function within the 'Comp' constructor.
-onComp :: (g (f a) -> g' (f' a')) -> ((Compose g f) a -> (Compose g' f') a')
-onComp h = Comp . h . unComp
+-- | Apply a function within the 'O' constructor.
+inO :: (g (f a) -> g' (f' a')) -> ((O g f) a -> (O g' f') a')
+inO h = O . h . unO
 
-instance (Functor g, Functor f) => Functor (Compose g f) where
-  fmap h (Comp gf) = Comp (fmap (fmap h) gf)
+instance (Functor g, Functor f) => Functor (O g f) where
+  fmap h (O gf) = O (fmap (fmap h) gf)
 
-instance (Applicative g, Applicative f) => Applicative (Compose g f) where
-  pure                     = Comp . pure . pure
-  Comp getf <*> Comp getx  = Comp (liftA2 (<*>) getf getx)
+instance (Applicative g, Applicative f) => Applicative (O g f) where
+  pure x            = O (pure (pure x))
+  O getf <*> O getx = O (liftA2 (<*>) getf getx)
 
--- instance (Functor g, Cofunctor f) => Cofunctor (Compose g f) where
---   cofmap h (Comp gf) = Comp (fmap (cofmap h) gf)
+-- instance (Functor g, Cofunctor f) => Cofunctor (O g f) where
+--   cofmap h (O gf) = O (fmap (cofmap h) gf)
 
 -- Or this alternative.  Having both yields "Duplicate instance
 -- declarations".
-instance (Cofunctor g, Functor f) => Cofunctor (Compose g f) where
-  cofmap h (Comp gf) = Comp (cofmap (fmap h) gf)
+instance (Cofunctor g, Functor f) => Cofunctor (O g f) where
+  cofmap h (O gf) = O (cofmap (fmap h) gf)
 
-
+-- We can also make functors by composing /cofunctors/.  GHC would
+-- consider such a declaration to be in conflict with the the
+-- composition-of-functors instance, because it doesn't take contexts into
+-- account.  Too bad.
 
 -- standard Monoid instance for Applicative applied to Monoid
-instance (Applicative (Compose g f), Monoid a) => Monoid (Compose g f a) where
+instance (Applicative (O g f), Monoid a) => Monoid (O g f a) where
   { mempty = pure mempty; mappend = (*>) }
 
 -- | Composition of type constructors: unary with binary.
@@ -110,11 +112,17 @@ splitA fab = (liftA fst fab, liftA snd fab)
 
 
 -- | Flip type arguments
-newtype Flip (~>) b a = Flip (a ~> b)
+newtype Flip (~>) b a = Flip { unFlip :: a ~> b }
+
+inFlip :: ((a~>b) -> (a' ~~> b')) -> (Flip (~>) b a -> Flip (~~>) b' a')
+inFlip f (Flip ar) = Flip (f ar)
+
+inFlip2 :: ((a~>b) -> (a' ~~> b') -> (a'' ~~~> b''))
+        -> (Flip (~>) b a -> Flip (~~>) b' a' -> Flip (~~~>) b'' a'')
+inFlip2 f (Flip ar) (Flip ar') = Flip (f ar ar')
 
 instance Arrow (~>) => Cofunctor (Flip (~>) b) where
   cofmap h (Flip f) = Flip (arr h >>> f)
-
 
 -- | Type application
 newtype App f a = App { unApp :: f a }
