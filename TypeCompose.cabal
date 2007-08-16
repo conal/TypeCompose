@@ -1,5 +1,5 @@
 Name:                TypeCompose
-Version:             0.1
+Version:             0.2
 Synopsis: 	     Type composition classes & instances
 Category:            Composition, Control
 Description:
@@ -25,10 +25,17 @@ License:             BSD3
 Stability:           provisional
 Hs-Source-Dirs:      src
 Extensions:          
-Build-Depends:       base, mtl
+Build-Depends:       base
 Exposed-Modules:     
+                     Data.Adorn
+                     Data.CxMonoid
+                     Data.RefMonad
+                     Data.Pair
+                     Data.Fun
+                     Data.Title
                      Control.Instances
                      Control.Compose
                      Control.DataDriven
+                     Control.Event
 Extra-Source-Files:
 ghc-options:         -O -Wall

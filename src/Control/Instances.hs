@@ -21,16 +21,9 @@ module Control.Instances () where
 
 import Data.Monoid
 import Control.Applicative
-import Control.Monad.Reader
-import Control.Monad
 
 
 -- Standard instance: Applicative functor applied to monoid
 instance Monoid a => Monoid (IO a) where 
   mempty  = pure mempty
   mappend = liftA2 mappend
-
-
--- standard Applicative instance for Monad
-instance Monad m => Applicative (ReaderT r m) where { pure = return; (<*>) = ap }
-
