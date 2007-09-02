@@ -1,4 +1,6 @@
-{-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
+{-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, UndecidableInstances, TypeSynonymInstances #-}
+
+-- TypeOperators
 
 ----------------------------------------------------------------------
 -- |
@@ -8,7 +10,7 @@
 -- 
 -- Maintainer  :  conal@conal.net
 -- Stability   :  experimental
--- Portability :  infix type ops, undecidable instances
+-- Portability :  see LANGUAGE pragma
 -- 
 -- Various type constructor compositions and instances for them.
 -- Some come from 
@@ -17,16 +19,19 @@
 ----------------------------------------------------------------------
 
 module Control.Compose
-  ( Cofunctor(..)
+  ( Unop, Binop
+  , Cofunctor(..)
   , O(..), inO, inO2, inO3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
   , OO(..)
   , Monoid_f(..)
-  , Flip(..), inFlip, inFlip2, inFlip3
+  , Flip(..), inFlip, inFlip2, inFlip3, OI, ToOI(..)
   , ArrowAp(..)
-  , App(..)
-  , Id(..)
+  , FunA(..), inFunA, inFunA2, FunAble(..)
+  , App(..), inApp, inApp2
+  , Id(..), inId
   , (:*:)(..), (***#), ($*), inProd, inProd2, inProd3
+  , (::*::)(..), inProdd, inProdd2
   , Arrw(..), (:->:) , inArrw, inArrw2, inArrw3
   , inConst, inConst2, inConst3
   , inEndo
@@ -47,6 +52,9 @@ infixr 1 :->:
 infixl 0 $*
 infixr 3 ***#
 
+
+type Unop  a = a -> a                   -- ^ Unary functions
+type Binop a = a -> a -> a              -- ^ Binary functions
 
 -- | Often useful for /acceptors/ (consumers, sinks) of values.
 class Cofunctor acc where
@@ -79,7 +87,7 @@ Corresponding to the first and second definitions above,
 @
 
 Similarly, there are two useful 'Functor' instances and two useful
-'Cofunctor' instances.  Mix & match as you like.
+'Cofunctor' instances.
 
 @
     instance (  Functor g,   Functor f) => Functor (O g f) where fmap = fmapFF
@@ -88,6 +96,12 @@ Similarly, there are two useful 'Functor' instances and two useful
     instance (Functor g, Cofunctor f) => Cofunctor (O g f) where cofmap = cofmapFC
     instance (Cofunctor g, Functor f) => Cofunctor (O g f) where cofmap = cofmapCF
 @
+
+However, it's such a bother to define the Functor instances per
+composition type, I've left the fmapFF case in.  If you want the fmapCC
+one, you're out of luck for now.  I'd love to hear a good solution.  Maybe
+someday Haskell will do Prolog-style search for instances, subgoaling the
+constraints, rather than just matching instance heads.
 
 -}
 
@@ -99,6 +113,18 @@ newtype (g `O` f) a = O { unO :: g (f a) }
 instance (Functor h, Adorn b (f a)) => Adorn (h b) ((h `O` f) a) where
   adorn   = O . fmap adorn
   unadorn = fmap unadorn . unO 
+
+-- Or this more symmetric variant
+
+-- instance (Functor h, Adorn b (f a), Adorn c (h b)) =>
+--     Adorn c ((h `O` f) a) where
+--   adorn   = O . fmap adorn . adorn
+--   unadorn = unadorn . fmap unadorn . unO 
+
+
+-- Here it is, as promised.
+instance (  Functor g,   Functor f) => Functor (O g f) where fmap = fmapFF
+
 
 -- | Apply a function within the 'O' constructor.
 inO :: (g (f a) -> g' (f' a')) -> ((O g f) a -> (O g' f') a')
@@ -149,7 +175,20 @@ instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
 -- For instance, /\ a b. f (a -> m b) =~ OO f Kleisli m
 
 
--- | Composition of type constructors: binary with unary.
+-- | Composition of type constructors: binary with unary.  See also
+-- 'FunA', which specializes from arrows to functions.
+-- 
+-- Warning: Wolfgang Jeltsch pointed out a problem with these definitions:
+-- 'splitA' and 'mergeA' are not inverses.  The definition of 'first',
+-- e.g., violates the \"extension\" law and causes repeated execution.
+-- Look for a reformulation or a clarification of required properties of
+-- the applicative functor @f@.
+-- 
+-- See also "Arrows and Computation", which notes that the following type
+-- is "almost an arrow" (http://www.soi.city.ac.uk/~ross/papers/fop.html).
+-- 
+-- > newtype ListMap i o = LM ([i] -> [o])
+
 
 newtype ArrowAp (~>) f a b = ArrowAp {unArrowAp :: f a ~> f b}
 
@@ -164,22 +203,45 @@ instance (ArrowLoop (~>), Applicative f) => ArrowLoop (ArrowAp (~>) f) where
   loop (ArrowAp k) =
     ArrowAp (loop (arr mergeA >>> k >>> arr splitA))
 
--- Wolfgang Jeltsch pointed out a problem with these definitions: 'splitA'
--- and 'mergeA' are not inverses.  The definition of 'first', e.g.,
--- violates the \"extension\" law and causes repeated execution.  Look for
--- a reformulation or a clarification of required properties of the
--- applicative functor @f@.
--- 
--- See also "Arrows and Computation", which notes that the following type
--- is "almost an arrow" (http://www.soi.city.ac.uk/~ross/papers/fop.html).
--- 
--- > newtype ListMap i o = LM ([i] -> [o])
-
 mergeA :: Applicative f => (f a, f b) -> f (a,b)
 mergeA ~(fa,fb) = liftA2 (,) fa fb
 
 splitA :: Applicative f => f (a,b) -> (f a, f b)
 splitA fab = (liftA fst fab, liftA snd fab)
+
+
+-- Hm.  See warning above for 'ArrowAp'
+
+-- | Common pattern for 'Arrow's.
+newtype FunA h a b = FunA (h a -> h b)
+
+-- | Apply unary function in side a 'FunA' representation.
+inFunA :: ((h a -> h b) -> (h' a' -> h' b'))
+       -> (FunA h a b -> FunA h' a' b')
+inFunA q (FunA f) = FunA (q f)
+
+-- | Apply binary function in side a 'FunA' representation.
+inFunA2 :: ((h a -> h b) -> (h' a' -> h' b') -> (h'' a'' -> h'' b''))
+       -> (FunA h a b -> FunA h' a' b' -> FunA h'' a'' b'')
+inFunA2 q (FunA f) (FunA g) = FunA (q f g)
+
+-- | Support needed for a 'FunA' to be an 'Arrow'.
+class FunAble h where
+  arrFun    :: (a -> b) -> (h a -> h b)
+  firstFun  :: (h a -> h a') -> (h (a,b) -> h (a',b))
+  secondFun :: (h b -> h b') -> (h (a,b) -> h (a,b'))
+  (***%)    :: (h a -> h b) -> (h a' -> h b') -> (h (a,a') -> h (b,b'))
+  (&&&%)    :: (h a -> h b) -> (h a  -> h b') -> (h a -> h (b,b'))
+
+
+instance FunAble h => Arrow (FunA h) where
+  arr p  = FunA    (arrFun p)
+  (>>>)  = inFunA2 (>>>)
+  first  = inFunA  firstFun
+  second = inFunA  secondFun
+  (***)  = inFunA2 (***%)
+  (&&&)  = inFunA2 (&&&%)
+
 
 
 -- | Simulates universal constraint @forall a. Monoid (f a)@.
@@ -240,8 +302,24 @@ instance (Applicative ((~>) a), Monoid o) => Monoid (Flip (~>) o a) where
 instance Monoid o => Monoid_f (Flip (->) o) where
   { mempty_f = mempty ; mappend_f = mappend }
 
+-- | (-> IO ()) as a 'Flip'.  A Cofunctor.
+type OI = Flip (->) (IO ())
+
+-- | Convert to an 'OI'.
+class ToOI sink where toOI :: sink b -> OI b
+
+instance ToOI OI where toOI = id
+
 -- | Type application
 newtype App f a = App { unApp :: f a }
+
+-- Apply unary function inside of an 'App representation.
+inApp :: (f a -> f' a') -> (App f a -> App f' a')
+inApp f (App ar) = App (f ar)
+
+-- Apply binary function inside of a 'App' representation.
+inApp2 :: (f a -> f' a' -> f'' a'') -> (App f a -> App f' a' -> App f'' a'')
+inApp2 h (App fa) (App fa') = App (h fa fa')
 
 -- Example: App IO ()
 instance (Applicative f, Monoid m) => Monoid (App f m) where
@@ -253,17 +331,34 @@ instance (Applicative f, Monoid m) => Monoid (App f m) where
 -- We can also drop the App constructor, but then we overlap with many
 -- other instances, like [a].
 instance (Applicative f, Monoid a) => Monoid (f a) where
-  mempty = pure mempty
-  mappend = (*>)
+  mempty  = pure mempty
+  mappend = liftA2 mappend
 -}
 
 
 -- | Identity type constructor.  Until there's a better place to find it.
+-- I'd use "Control.Monad.Identity", but I don't want to introduce a
+-- dependency on mtl just for Id.
 newtype Id a = Id { unId :: a }
 
+inId :: (a -> b) -> (Id a -> Id b)
+inId f (Id a) = Id (f a)
 
--- | Pairing of type constructors
+-- | Pairing of unary type constructors
 newtype (f :*: g) a = Prod { unProd :: (f a, g a) }
+  -- deriving (Show, Eq, Ord)
+
+-- In GHC 6.7, deriving no longer works on types like :*:.  So:
+
+instance (Show (f a, g a)) => Show ((f :*: g) a) where
+  show (Prod p) = "Prod " ++ show p
+
+instance (Eq (f a, g a)) => Eq ((f :*: g) a) where
+  Prod p == Prod q = p == q
+
+instance (Ord (f a, g a)) => Ord ((f :*: g) a) where
+  Prod p <= Prod q = p <= q
+  Prod p `compare` Prod q = p `compare` q
 
 instance (Adorn b (f a), Adorn b' (g a)) => Adorn (b,b') ((f :*: g) a) where
     adorn   = Prod . (adorn *** adorn)
@@ -286,9 +381,11 @@ inProd3 :: ((f a, g a) -> (f' a', g' a') -> (f'' a'', g'' a'')
                         -> (f''' :*: g''') a''')
 inProd3 h (Prod p) (Prod p') (Prod p'') = Prod (h p p' p'')
 
+-- | A handy combining form.  See '(***#)' for an sample use.
 ($*) :: (a -> b, a' -> b') -> (a,a') -> (b,b')
 ($*) = uncurry (***)
 
+-- | Combine two binary functions into a binary function on pairs
 (***#) :: (a -> b -> c) -> (a' -> b' -> c')
        -> (a, a') -> (b, b') -> (c, c')
 h ***# h' = \ as bs -> (h,h') $* as $* bs
@@ -305,6 +402,44 @@ instance (Monoid_f f, Monoid_f g) => Monoid_f (f :*: g) where
   mempty_f  = Prod (mempty_f,mempty_f)
   mappend_f = inProd2 (mappend_f ***# mappend_f)
 
+instance (Functor f, Functor g) => Functor (f :*: g) where
+  fmap h = inProd (fmap h *** fmap h)
+
+------
+
+-- | Pairing of binary type constructors
+newtype (f ::*:: g) a b = Prodd { unProdd :: (f a b, g a b) }
+  -- deriving (Show, Eq, Ord)
+
+instance (Show (f a b, g a b)) => Show ((f ::*:: g) a b) where
+  show (Prodd p) = "Prod " ++ show p
+
+instance (Eq (f a b, g a b)) => Eq ((f ::*:: g) a b) where
+  Prodd p == Prodd q = p == q
+
+instance (Ord (f a b, g a b)) => Ord ((f ::*:: g) a b) where
+  Prodd p < Prodd q = p < q
+
+-- | Apply binary function inside of @f :*: g@ representation.
+inProdd :: ((f a b, g a b) -> (f' a' b', g' a' b'))
+        -> ((f ::*:: g) a b -> (f' ::*:: g') a' b')
+inProdd h (Prodd p) = Prodd (h p)
+
+-- | Apply binary function inside of @f :*: g@ representation.
+inProdd2 :: ((f a b, g a b) -> (f' a' b', g' a' b') -> (f'' a'' b'', g'' a'' b''))
+         -> ((f ::*:: g) a b -> (f' ::*:: g') a' b' -> (f'' ::*:: g'') a'' b'')
+inProdd2 h (Prodd p) (Prodd p') = Prodd (h p p')
+
+instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
+  arr    = Prodd .  (arr    &&&  arr   )
+  (>>>)  = inProdd2 ((>>>)  ***# (>>>) )
+  first  = inProdd  (first  ***  first )
+  second = inProdd  (second ***  second)
+  (***)  = inProdd2 ((***)  ***# (***) )
+  (&&&)  = inProdd2 ((&&&)  ***# (&&&) )
+
+
+------
 
 -- | Arrow-like type between type constructors (doesn't enforce @Arrow
 -- (~>)@ here).
@@ -316,7 +451,7 @@ instance (Arrow (~>), Adorn b (f a), Adorn c (g a))
     adorn   = Arrw . ((arr unadorn >>>) . (>>> arr adorn))
     unadorn = ((arr adorn >>>) . (>>> arr unadorn)) . unArrw
 
--- | Apply unary function inside of @f :*: g@ representation.
+-- | Apply unary function inside of @Arrw@ representation.
 inArrw :: ((f a ~> g a) -> (f' a' ~> g' a'))
        -> ((Arrw (~>) f g) a -> (Arrw (~>) f' g') a')
 inArrw   h (Arrw p) = Arrw (h p)
@@ -330,19 +465,6 @@ inArrw2 h (Arrw p) (Arrw p') = Arrw (h p p')
 inArrw3 :: ((f a ~> g a) -> (f' a' ~> g' a') -> (f'' a'' ~> g'' a'') -> (f''' a''' ~> g''' a'''))
         -> ((Arrw (~>) f g) a -> (Arrw (~>) f' g') a' -> (Arrw (~>) f'' g'') a'' -> (Arrw (~>) f''' g''') a''')
 inArrw3 h (Arrw p) (Arrw p') (Arrw p'') = Arrw (h p p' p'')
-
-{-
-
-  fga :: f a ~> g a
-  fgb :: f b ~> g b
-  fga *** fgb :: (f a, f b) ~> (g a, g b)
-
-  ??? :: f (a,b) ~> g (a,b)
-
-  uncurry pair :: (f a, f b) -> f (a,b)
-  arr (uncurry pair) :: (f a, f b) ~> f (a,b)
-
--}
 
 -- Functor & Cofunctor instances.  Beware use of 'arr', which is not
 -- available for some of my favorite arrows.
@@ -361,7 +483,8 @@ instance (Arrow (~>), Functor f, Cofunctor g) => Cofunctor (Arrw (~>) f g) where
 -- 'Arrw' specialized to functions.  
 type (:->:) = Arrw (->)
 
----- Control.Applicative.Const
+
+---- For Control.Applicative Const
 
 inConst :: (a -> b) -> Const a u -> Const b v
 inConst f (Const a) = Const (f a)
@@ -374,13 +497,12 @@ inConst3 :: (a -> b -> c -> d)
 inConst3 f (Const a) (Const b) (Const c) = Const (f a b c)
 
 
----- Control.Applicative.Endo
-
+---- For Control.Applicative.Endo
 
 instance Monoid_f Endo where { mempty_f = mempty; mappend_f = mappend }
 
 -- | Convenience for partial-manipulating functions
-inEndo :: ((a->a) -> (a'->a')) -> (Endo a -> Endo a')
+inEndo :: (Unop a -> Unop a') -> (Endo a -> Endo a')
 inEndo f = Endo . f . appEndo
 
 -- -- | Dual for 'inEndo'
@@ -394,3 +516,4 @@ inEndo f = Endo . f . appEndo
 
 -- -- Simple show instance.  Better: show an arbitrary sampling of the function.
 -- instance Show (Endo a) where show _ = "Endo <function>"
+

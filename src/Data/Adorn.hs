@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
+{-# LANGUAGE MultiParamTypeClasses, UndecidableInstances #-}
 
 ----------------------------------------------------------------------
 -- |

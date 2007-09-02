@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE Rank2Types #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -30,6 +30,9 @@ class Fun dom ran where fun :: FunTy dom ran
 
 instance Fun Id (Flip (->) o) where
   fun (Id a) (Flip bo) = Flip (\ ab -> bo (ab a))
+
+instance Fun IO OI where
+  fun geta (Flip snkb) = Flip (\ f -> fmap f geta >>= snkb)
 
 
 -- | Applicative functor version 

@@ -1,5 +1,3 @@
-{-# OPTIONS #-}
-
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Control.Instances
@@ -24,6 +22,6 @@ import Control.Applicative
 
 
 -- Standard instance: Applicative functor applied to monoid
-instance Monoid a => Monoid (IO a) where 
-  mempty  = pure mempty
+instance Monoid o => Monoid (IO o) where 
+  mempty  = pure   mempty
   mappend = liftA2 mappend

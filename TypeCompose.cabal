@@ -4,14 +4,16 @@ Synopsis: 	     Type composition classes & instances
 Category:            Composition, Control
 Description:
   TypeCompose provides some classes & instances for forms of type
-  composition.  Bonus: a very simple implementation of data-driven
-  computation.
+  composition, as well as some modules who haven't yet found a home.
   .
   See also
   .
   * The project wiki page: <http://haskell.org/haskellwiki/TypeCompose>
   .
-  * Use of TypeCompose in Phooey: <http://haskell.org/haskellwiki/Phooey>
+  * Use of TypeCompose in
+  ** DataDriven : <http://haskell.org/haskellwiki/DataDriven>
+  ** Phooey     : <http://haskell.org/haskellwiki/Phooey>
+  ** Eros       : <http://haskell.org/haskellwiki/Eros>
   .
   The module documentation pages have links to colorized source code and
   to wiki pages where you can read and contribute /user comments/.  Enjoy!
@@ -20,6 +22,7 @@ Description:
 Author:              Conal Elliott 
 Maintainer:          conal@conal.net
 Homepage:            http://haskell.org/haskellwiki/TypeCompose
+Package-Url:	     http://darcs.haskell.org/packages/TypeCompose
 Copyright:           (c) 2007 by Conal Elliott
 License:             BSD3
 Stability:           provisional
@@ -35,7 +38,5 @@ Exposed-Modules:
                      Data.Title
                      Control.Instances
                      Control.Compose
-                     Control.DataDriven
-                     Control.Event
 Extra-Source-Files:
 ghc-options:         -O -Wall

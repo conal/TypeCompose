@@ -1,29 +1,41 @@
-Version 0.2:
-* New modules: Data.Pair & Data.Fun.  Classes of pair-like and
-  function-like types.
-* In Control.Compose: classes FConvert & FConvert' convert between
-  "direct" & functor-wrapped style
-* Renamed StaticArrow/Static to OO/OO
-* Now in{O,Flip,Prod,Arrw}{,2,3}
-* Sink type alias and Monoid instance.
-* Monoid_f and O instance.
-* Arrw type class with Functor & Cofunctor instances.
-* inConst, inConst2, inConst3
-* Monoid instance for DataDrivenG (but no Monoid_f)
-* Data.Title: a titling class for type constructors.
-* Eliminated dependency on "mtl" package by removing a standard
-  applicative instance for ReaderT.
-* Data.CxMonoid
-* DataDriven now expose runDDJoin = runDD . joinDD.
-* DataDriven: Src, Snk, Act, Nws.  Sorry about these names.  suggestions?
+% [TypeCompose](http://haskell.org/haskellwiki/TypeCompose) changes
 
-Version 0.1:
-* Renamed "Compose/Comp/unComp" to "O/O/unO".
-* Renamed "onComp" to "inO"
-* Renamed "mapSrc" to "mapCur", and renamed type parameter "src" to "cur",
-  to avoid confusion with "Source" in Phooey's use of DataDriven.
-* Swapped argument order to dd in DataDriven.
-* Renamed "Updater" to "Action"
-* Changed the Monoid (IO a) instance in Control.Instances to use "liftA2
-  mappend" instead of "(*>)".
-* Added unFlip, inFlip, inFlip2
+## Version 0.2#
+
++  Using `LANGUAGE` instead of `OPTIONS` pragmas
++  New modules: [Data.Pair](src/Data/Pair.hs) &
+   [Data.Fun](src/Data/Fun.hs).  Classes of pair-like and function-like
+   types.
++  In [Data.Adorn](src/Data/Adorn.hs): class `Adorn` converts between
+   "direct" & type-constructor-wrapped styles
++  Renamed StaticArrow/Static to OO/OO
++  Now in{O,Flip,Prod,Arrw}{,2,3}
++  Sink type alias and Monoid instance.
++  Monoid_f and O instance.
++  Arrw type class with Functor & Cofunctor instances.
++  inConst, inConst2, inConst3
++  Monoid instance for DataDrivenG (but no Monoid_f)
++  [Data.Title](src/Data/Title.hs): a titling class for type constructors.
+   Doesn't really belong here.
++  Eliminated dependency on "mtl" package by removing a standard
+   applicative instance for ReaderT.
++  [Data.CxMonoid](src/Data/CxMonoid.hs)
++  DataDriven now expose runDDJoin = runDD . joinDD.
++  Type constructors :*:, ::*::, & :~>:
++  FunA and FunAble, for convenient Arrow definitions.  See also FunD &
+   FunDble in DeepArrow.
+
+## Version 0.1 #
+
++  Renamed "Compose/Comp/unComp" to "O/O/unO".
++  Renamed "onComp" to "inO"
++  Renamed "mapSrc" to "mapCur", and renamed type parameter "src" to "cur",
+   to avoid confusion with "Source" in Phooey's use of DataDriven.
++  Swapped argument order to dd in DataDriven.
++  Renamed "Updater" to "Action"
++  Changed the Monoid (IO a) instance in Control.Instances to use "liftA2
+   mappend" instead of "(*>)".
++  Added unFlip, inFlip, inFlip2
+
+
+[Control.Compose]: src/Control.Compose.hs
