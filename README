@@ -1,15 +1,17 @@
+% TypeCompose
+
 TypeCompose provides some classes & instances for forms of type
-composition.  It also includes a very simple implementation of data-driven
-computation.  See the description and link to documentation:
+composition, as well as some modules that haven't found another home.  The
+[wiki page] contains a description and links to documentation.
 
-  http://haskell.org/haskellwiki/TypeCompose
-
-Please share any comments & suggestions on the discussion (talk) page
-there.
+Please share any comments & suggestions on the [talk page] there.
 
 You can configure, build, and install all in the usual way with Cabal
 commands.
 
-  runhaskell Setup.lhs configure
-  runhaskell Setup.lhs build
-  runhaskell Setup.lhs install
+    runhaskell Setup.lhs configure
+    runhaskell Setup.lhs build
+    runhaskell Setup.lhs install
+
+[wiki page]: http://haskell.org/haskellwiki/TypeCompose
+[talk page]: http://haskell.org/haskellwiki/Talk:TypeCompose

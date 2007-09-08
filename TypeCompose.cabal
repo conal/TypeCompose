@@ -31,7 +31,6 @@ Extensions:
 Build-Depends:       base
 Exposed-Modules:     
                      Data.Bijection
-                     Data.Adorn
                      Data.CxMonoid
                      Data.RefMonad
                      Data.Pair

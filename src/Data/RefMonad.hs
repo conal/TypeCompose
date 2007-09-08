@@ -1,5 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
 
 ----------------------------------------------------------------------
 -- |

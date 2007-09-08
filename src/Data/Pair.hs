@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE Rank2Types, TypeOperators, FlexibleInstances #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -33,6 +33,9 @@ type PairTy f = forall a b. f a -> f b -> f (a,b)
 -- | Type constructor class for pair-like things
 class Pair f where pair :: PairTy f
 
+-- instance Pair (Const a) where
+--   pair (Const a) (Const b) = Const (a,b)
+
 instance Pair Id where
   Id a `pair` Id b = Id (a,b)
 
@@ -47,7 +50,7 @@ instance             Pair ((->) u) where pair = liftA2 (,)
 instance             Pair IO       where pair = liftA2 (,)
 
 
--- | Type of 'unpair' method.
+-- | Type of 'unpair' method.  Generalizes 'unzip'.
 type UnpairTy f = forall a b. f (a,b) -> (f a, f b)
 
 -- | Dissectable as pairs.  Minimal instance definition: either (a)
@@ -66,6 +69,14 @@ instance Unpair (Const a) where
 
 instance Unpair Id where
   unpair (Id (a,b)) = (Id a, Id b)
+
+-- Schema: Substitute any functor f.  But watch out for effects!
+
+-- instance Functor f => Unpair f where {pfst = fmap fst; psnd = fmap snd}
+
+-- e.g.,
+
+instance Unpair [] where {pfst = fmap fst; psnd = fmap snd}
 
 
 -- | Dual to 'Unpair'

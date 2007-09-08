@@ -1,5 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 
+-- TypeOperators
+
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Data.Bijection
@@ -8,13 +10,16 @@
 -- 
 -- Maintainer  :  conal@conal.net
 -- Stability   :  experimental
--- Portability :  ???
+-- Portability :  TypeOperators
 -- 
--- Bijections
+-- Bijections.  See also [1], which provides a more general setting.
+-- 
+--  [1]: /There and Back Again: Arrows for Invertible Programming/,
+--  <http://citeseer.ist.psu.edu/alimarine05there.html>.
 ----------------------------------------------------------------------
 
 module Data.Bijection
-  ( (:<->:)(..)
+  ( Bijection(..),(:<->:)
   , idb, inverse, bimap, (--->)
   , inBi
   ) where
@@ -25,16 +30,23 @@ import Control.Arrow
 infix 8 :<->:
 infixr 2 --->
 
--- | A type of bijections
-data a :<->: b = Bi { biTo :: a -> b, biFrom :: b -> a }
+-- | A type of bijective arrows
+data Bijection (~>) a b = Bi { biTo :: a ~> b, biFrom :: b ~> a }
 
-idb :: a :<->: a
-idb = Bi id id
+-- | Bijective functions
+type a :<->: b = Bijection (->) a b
 
-inverse :: a :<->: b -> b :<->: a
+-- | Bijective identity arrow.  Warning: uses 'arr' on @(~>)@.  If you
+-- have no 'arr', but you have a @DeepArrow@, you can instead use @Bi idA
+-- idA@.
+idb :: Arrow (~>) => Bijection (~>) a a
+idb = Bi idA idA where idA = arr id
+
+-- | Inverse bijection
+inverse :: Bijection (~>) a b -> Bijection (~>) b a
 inverse (Bi ab ba) = Bi ba ab
 
-instance Arrow (:<->:) where
+instance Arrow (~>) => Arrow (Bijection (~>)) where
   arr = error "No arr for (:<->:)."
   Bi ab ba >>> Bi bc cb = Bi (ab >>> bc) (cb >>> ba)
   first  (Bi ab ba) = Bi (first  ab) (first  ba)
@@ -47,16 +59,15 @@ instance Arrow (:<->:) where
 
 -- The (***) operator creates bijections on pairs.  Here are some similar tools.
 
--- Bijections on functors
+-- | Bijections on functors
 bimap :: Functor f => (a :<->: b) -> (f a :<->: f b)
 bimap (Bi ab ba) = Bi (fmap ab) (fmap ba)
 
--- Bijections on functions.  Not sure how best to orient the arguments.
--- Flip around first argument?
-(--->) :: (a :<->: b) -> (c :<->: d) -> ((a -> c) :<->: (b -> d))
+-- | Bijections on arrows.
+(--->) :: Arrow (~>) => Bijection (~>) a b -> Bijection (~>) c d
+       -> (a ~> c) :<->: (b ~> d)
 Bi ab ba ---> Bi cd dc = Bi (\ ac -> ba>>>ac>>>cd) (\ bd -> ab>>>bd>>>dc)
 
-
 -- | Apply a function in an alternative (monomorphic) representation.
-inBi :: (a :<->: b) -> (a -> a) -> (b -> b)
-inBi (Bi to from) = (to .).(. from)
+inBi :: Arrow (~>) => Bijection (~>) a b -> (a ~> a) -> (b ~> b)
+inBi (Bi to from) aa = from >>> aa >>> to

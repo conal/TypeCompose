@@ -1,6 +1,5 @@
-{-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, UndecidableInstances, TypeSynonymInstances #-}
+{-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, UndecidableInstances, TypeSynonymInstances, TypeOperators #-}
 
--- TypeOperators
 
 ----------------------------------------------------------------------
 -- |
@@ -20,8 +19,8 @@
 
 module Control.Compose
   ( Unop, Binop
-  , Cofunctor(..)
-  , O(..), biO, convO, toO, fromO, inO, inO2, inO3
+  , Cofunctor(..), bicomap
+  , O(..), biO, convO, coconvO, inO, inO2, inO3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
   , OO(..)
   , Monoid_f(..)
@@ -30,10 +29,10 @@ module Control.Compose
   , FunA(..), inFunA, inFunA2, FunAble(..)
   , App(..), biApp, inApp, inApp2
   , Id(..), biId, inId
-  , (:*:)(..), biProd, convProd, toProd, fromProd, (***#), ($*), inProd, inProd2, inProd3
+  , (:*:)(..), biProd, convProd, (***#), ($*), inProd, inProd2, inProd3
   , (::*::)(..), inProdd, inProdd2
-  , Arrw(..), toArrw, fromArrw, (:->:), biFun, convFun
-  , toFun, fromFun, inArrw, inArrw2, inArrw3
+  , Arrw(..), (:->:)
+  , biFun, convFun, inArrw, inArrw2, inArrw3
   , biConst, inConst, inConst2, inConst3
   , biEndo, inEndo
   ) where
@@ -44,7 +43,6 @@ import Data.Monoid
 
 -- import Test.QuickCheck -- for Endo
 
-import Data.Adorn   -- phase out
 import Data.Bijection
 
 infixl 9 `O`
@@ -62,6 +60,9 @@ type Binop a = a -> a -> a              -- ^ Binary functions
 class Cofunctor acc where
   cofmap :: (a -> b) -> (acc b -> acc a)
 
+-- | Bijections on contravariant functors
+bicomap :: Cofunctor f => (a :<->: b) -> (f a :<->: f b)
+bicomap (Bi ab ba) = Bi (cofmap ba) (cofmap ab)
 
 {- |
 
@@ -107,71 +108,55 @@ constraints, rather than just matching instance heads.
 
 -}
 
--- TODO: change prefix O uses ("O g f") to infix ("g `O` f") throughout,
--- once I'm running on the new Haddock.
-
 newtype (g `O` f) a = O { unO :: g (f a) }
 
 -- Here it is, as promised.
-instance (  Functor g,   Functor f) => Functor (O g f) where fmap = fmapFF
-
-instance (Functor h, Adorn b (f a)) => Adorn (h b) ((h `O` f) a) where
-  adorn   = O . fmap adorn
-  unadorn = fmap unadorn . unO 
-
--- Or this more symmetric variant
-
--- instance (Functor h, Adorn b (f a), Adorn c (h b)) =>
---     Adorn c ((h `O` f) a) where
---   adorn   = O . fmap adorn . adorn
---   unadorn = unadorn . fmap unadorn . unO 
-
-toO :: Functor g => (b -> g c) -> (c -> f a) -> (b -> (g `O` f) a)
-toO toG toF = O . fmap toF . toG
-
-fromO :: Functor g => (g c -> b) -> (f a -> c) -> ((g `O` f) a -> b)
-fromO fromG fromF = fromG . fmap fromF . unO
+instance (  Functor g,   Functor f) => Functor (g `O` f) where fmap = fmapFF
 
 -- | @newtype@ bijection
 biO :: g (f a) :<->: (g `O` f) a
 biO = Bi O unO
 
--- | Compose a bijection
+-- | Compose a bijection, Functor style
 convO :: Functor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g `O` f) a)
 convO biG biF = biG >>> bimap biF >>> Bi O unO
 
+-- | Compose a bijection, Cofunctor style
+coconvO :: Cofunctor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g `O` f) a)
+coconvO biG biF = biG >>> bicomap biF >>> Bi O unO
+
 
 -- | Apply a function within the 'O' constructor.
-inO :: (g (f a) -> g' (f' a')) -> ((O g f) a -> (O g' f') a')
+inO :: (g (f a) -> g' (f' a')) -> ((g `O` f) a -> (g' `O` f') a')
 inO = (O .).(. unO)
 
 inO2 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a''))
-     -> ((O g f) a -> (O g' f') a' -> (O g'' f'') a'')
+     -> ((g `O` f) a -> (g' `O` f') a' -> (g'' `O` f'') a'')
 inO2 h (O gfa) = inO (h gfa)
 
 inO3 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a'')   -> g''' (f''' a'''))
-     -> ((O g f) a -> (O g' f') a' -> (O g'' f'') a'' -> (O g''' f''') a''')
+     -> ((g `O` f) a -> (g' `O` f') a' -> (g'' `O` f'') a'' -> (g''' `O` f''') a''')
 inO3 h (O gfa) = inO2 (h gfa)
 
 -- | Used for the Functor `O` Functor instance of Functor
-fmapFF :: (  Functor g,   Functor f) => (a -> b) -> O g f a -> O g f b
+fmapFF :: (  Functor g,   Functor f) => (a -> b) -> (g `O` f) a -> (g `O` f) b
 fmapFF h = inO $ fmap (fmap h)
 
 -- | Used for the Cofunctor `O` Cofunctor instance of Functor
-fmapCC :: (Cofunctor g, Cofunctor f) => (a -> b) -> O g f a -> O g f b
+fmapCC :: (Cofunctor g, Cofunctor f) => (a -> b) -> (g `O` f) a -> (g `O` f) b
 fmapCC h = inO $ cofmap (cofmap h)
 
 -- | Used for the Functor `O` Cofunctor instance of Functor
-cofmapFC :: (Functor g, Cofunctor f) => (b -> a) -> O g f a -> O g f b
+cofmapFC :: (Functor g, Cofunctor f) => (b -> a) -> (g `O` f) a -> (g `O` f) b
 cofmapFC h (O gf) = O (fmap (cofmap h) gf)
 
 -- | Used for the Cofunctor `O` Functor instance of Functor
-cofmapCF :: (Cofunctor g, Functor f) => (b -> a) -> O g f a -> O g f b
+cofmapCF :: (Cofunctor g, Functor f) => (b -> a) -> (g `O` f) a -> (g `O` f) b
 cofmapCF h (O gf) = O (cofmap (fmap h) gf)
 
 
-instance ( Functor (O g f)
-         , Applicative g, Applicative f) => Applicative (O g f) where
+instance ( Functor (g `O` f)
+         , Applicative g, Applicative f) => Applicative (g `O` f) where
   pure x            = O (pure (pure x))
   O getf <*> O getx = O (liftA2 (<*>) getf getx)
 
@@ -271,7 +256,7 @@ class Monoid_f m where
   mempty_f  :: forall a. m a
   mappend_f :: forall a. m a -> m a -> m a
 
--- instance Monoid_f g => Monoid_f (O g f) where
+-- instance Monoid_f g => Monoid_f (g `O` f) where
 --   mempty_f  = mempty
 --   mappend_f = mappend
 
@@ -279,7 +264,7 @@ class Monoid_f m where
 instance Monoid_f [] where { mempty_f = mempty ; mappend_f = mappend }
 
 
--- instance Monoid (g (f a)) => Monoid (O g f a) where
+-- instance Monoid (g (f a)) => Monoid ((g `O` f) a) where
 --   mempty  = O mempty
 --   mappend = inO2 mappend
 
@@ -290,10 +275,6 @@ newtype Flip (~>) b a = Flip { unFlip :: a ~> b }
 -- | @newtype@ bijection
 biFlip :: (a ~> b) :<->: Flip (~>) b a
 biFlip = Bi Flip unFlip
-
-instance Adorn (a -> o) (Flip (->) o a) where
-  adorn   = Flip
-  unadorn = unFlip
 
 -- Apply unary function inside of a 'Flip' representation.
 inFlip :: ((a~>b) -> (a' ~~> b')) -> (Flip (~>) b a -> Flip (~~>) b' a')
@@ -375,12 +356,6 @@ biId = Bi Id unId
 newtype (f :*: g) a = Prod { unProd :: (f a, g a) }
   -- deriving (Show, Eq, Ord)
 
-toProd :: (b -> f a) -> (c -> g a) -> ((b,c) -> (f :*: g) a)
-toProd toF toG (b,c) = Prod (toF b, toG c)
-
-fromProd :: (f a -> b) -> (g a -> c) -> ((f :*: g) a -> (b,c))
-fromProd fromF fromG (Prod (fa,ga)) = (fromF fa, fromG ga)
-
 -- | @newtype@ bijection
 biProd :: (f a, g a) :<->: (f :*: g) a
 biProd = Bi Prod unProd
@@ -400,10 +375,6 @@ instance (Eq (f a, g a)) => Eq ((f :*: g) a) where
 instance (Ord (f a, g a)) => Ord ((f :*: g) a) where
   Prod p <= Prod q = p <= q
   Prod p `compare` Prod q = p `compare` q
-
-instance (Adorn b (f a), Adorn b' (g a)) => Adorn (b,b') ((f :*: g) a) where
-    adorn   = Prod . (adorn *** adorn)
-    unadorn = (unadorn *** unadorn) . unProd
 
 -- | Apply unary function inside of @f :*: g@ representation.
 inProd :: ((f a, g a) -> (f' a', g' a'))
@@ -486,17 +457,13 @@ instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
 -- (~>)@ here).
 newtype Arrw (~>) f g a = Arrw { unArrw :: f a ~> g a }
 
-toArrw :: Arrow (~>) => (f a ~> b) -> (c ~> g a) -> ((b ~> c) -> Arrw (~>) f g a)
-toArrw fromF toG h = Arrw (fromF >>> h >>> toG)
+-- Replace with generalized bijection?
 
-fromArrw :: Arrow (~>) => (b ~> f a) -> (g a ~> c) -> (Arrw (~>) f g a -> (b ~> c))
-fromArrw toF fromG (Arrw h') = toF >>> h' >>> fromG
+-- toArrw :: Arrow (~>) => (f a ~> b) -> (c ~> g a) -> ((b ~> c) -> Arrw (~>) f g a)
+-- toArrw fromF toG h = Arrw (fromF >>> h >>> toG)
 
--- Coverage condition fails, hence -fallow-undecidable-instances
-instance (Arrow (~>), Adorn b (f a), Adorn c (g a))
-  => Adorn (b ~> c) (Arrw (~>) f g a) where
-    adorn   = Arrw . ((arr unadorn >>>) . (>>> arr adorn))
-    unadorn = ((arr adorn >>>) . (>>> arr unadorn)) . unArrw
+-- fromArrw :: Arrow (~>) => (b ~> f a) -> (g a ~> c) -> (Arrw (~>) f g a -> (b ~> c))
+-- fromArrw toF fromG (Arrw h') = toF >>> h' >>> fromG
 
 -- | Apply unary function inside of @Arrw@ representation.
 inArrw :: ((f a ~> g a) -> (f' a' ~> g' a'))
@@ -529,14 +496,6 @@ instance (Arrow (~>), Functor f, Cofunctor g) => Cofunctor (Arrw (~>) f g) where
 
 -- 'Arrw' specialized to functions.  
 type (:->:) = Arrw (->)
-
--- | 'toArrw' specialized to functions
-toFun :: (f a -> b) -> (c -> g a) -> ((b -> c) -> (f :->: g) a)
-toFun = toArrw
-
--- | 'fromArrw' specialized to functions
-fromFun :: (b -> f a) -> (g a -> c) -> ((f :->: g) a -> (b -> c))
-fromFun = fromArrw
 
 -- | @newtype@ bijection
 biFun :: (f a -> g a) :<->: (f :->: g) a

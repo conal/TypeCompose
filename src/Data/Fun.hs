@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE Rank2Types, TypeOperators, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, TypeSynonymInstances #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -17,16 +17,19 @@ module Data.Fun (FunTy, Fun(..), Unfun(..), Cofun(..)) where
 
 
 import Data.Monoid (Endo)
-import Control.Applicative (Applicative,liftA2)
+import Control.Applicative
 import Control.Arrow
 
 import Control.Compose
+import Data.Bijection
 
 -- | Type of 'fun' method
 type FunTy dom ran = forall a b. dom a -> ran b -> ran (a -> b)
 
 -- | Type constructor class for function-like things.
 class Fun dom ran where fun :: FunTy dom ran
+
+-- TODO: rename "fun" to "lambda".
 
 instance Fun Id (Flip (->) o) where
   fun (Id a) (Flip bo) = Flip (\ ab -> bo (ab a))
@@ -45,10 +48,27 @@ apFun = inO2 (liftA2 fun)
 -- instance (Applicative f, Fun dom ran) => Fun (f `O` dom) (f `O` ran) where
 --     fun = apFun
 
+-- f a & f (b -> o)
 instance Applicative f => Fun f (f `O` Flip (->) o) where
   -- Map f a -> (f `O` Id) a, and appeal to the O/O and Id/Flip instances
   fun dom ran = apFun (O (fmap Id dom)) ran
 
+
+-- Helper
+apFun' :: Applicative f => f a -> (f b -> o) -> (f (a->b) -> o)
+apFun' a bo ab = bo (ab <*> a)
+
+-- f a & (f b -> o)
+instance Applicative f => Fun f (Flip (->) o `O` f) where
+  fun a b = biTo bi (apFun' a (biFrom bi b))
+   where
+     bi = coconvO biFlip idb
+
+-- Different wrapping of above
+instance Applicative f => Fun f (f :->: Const o) where
+  fun a b = biTo bi (apFun' a (biFrom bi b))
+   where
+     bi = convFun idb biConst
 
 instance (Fun dom ran, Fun dom' ran')
   => Fun (dom :*: dom') (ran :*: ran') where

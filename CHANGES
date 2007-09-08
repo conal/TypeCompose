@@ -1,29 +1,26 @@
-% [TypeCompose](http://haskell.org/haskellwiki/TypeCompose) changes
+% TypeCompose changes
 
 ## Version 0.2#
 
++  [Data.Bijection](src/Data/Bijection.hs): bijective arrows.  Used in
+   [Control.Compose] for composing representation transformations.
 +  Using `LANGUAGE` instead of `OPTIONS` pragmas
-+  New modules: [Data.Pair](src/Data/Pair.hs) &
-   [Data.Fun](src/Data/Fun.hs).  Classes of pair-like and function-like
-   types.
-+  In [Data.Adorn](src/Data/Adorn.hs): class `Adorn` converts between
-   "direct" & type-constructor-wrapped styles
++  [Data.Pair](src/Data/Pair.hs) & [Data.Fun](src/Data/Fun.hs).  Classes of
+   pair-like and function-like types.
++  [Data.RefMonad](src/Data/RefMonad.hs)
 +  Renamed StaticArrow/Static to OO/OO
-+  Now in{O,Flip,Prod,Arrw}{,2,3}
-+  Sink type alias and Monoid instance.
-+  Monoid_f and O instance.
-+  Arrw type class with Functor & Cofunctor instances.
-+  inConst, inConst2, inConst3
-+  Monoid instance for DataDrivenG (but no Monoid_f)
++  Now in{O,Flip,Prod,Arrw,Const}{,2,3} (i.e., `inO2` etc)
++  `Sink` type alias and `Monoid` instance.
++  `Monoid_f` and `O` instance.
++  `Arrw` type class with `Functor` & `Cofunctor` instances.
 +  [Data.Title](src/Data/Title.hs): a titling class for type constructors.
    Doesn't really belong here.
 +  Eliminated dependency on "mtl" package by removing a standard
-   applicative instance for ReaderT.
-+  [Data.CxMonoid](src/Data/CxMonoid.hs)
-+  DataDriven now expose runDDJoin = runDD . joinDD.
-+  Type constructors :*:, ::*::, & :~>:
-+  FunA and FunAble, for convenient Arrow definitions.  See also FunD &
-   FunDble in DeepArrow.
+   applicative instance for `ReaderT`.
++  [Data.CxMonoid](src/Data/CxMonoid.hs): context-dependent monoid
++  Type constructors `:*:`, `::*::`, & `:~>:`
++  `FunA` and `FunAble`, for convenient `Arrow` definitions.  See also `FunD` &
+   `FunDble` in [DeepArrow].
 
 ## Version 0.1 #
 
@@ -37,5 +34,8 @@
    mappend" instead of "(*>)".
 +  Added unFlip, inFlip, inFlip2
 
+
+[TypeCompose]:     http://haskell.org/haskellwiki/TypeCompose
+[DeepArrow]:       http://haskell.org/haskellwiki/DeepArrow
 
 [Control.Compose]: src/Control.Compose.hs
