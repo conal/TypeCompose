@@ -16,10 +16,13 @@
 -- 
 --  [1]: /There and Back Again: Arrows for Invertible Programming/,
 --  <http://citeseer.ist.psu.edu/alimarine05there.html>.
+-- 
+-- 
 ----------------------------------------------------------------------
 
 module Data.Bijection
-  ( Bijection(..),(:<->:)
+  (
+    Bijection(..),(:<->:)
   , idb, inverse, bimap, (--->)
   , inBi
   ) where
@@ -52,12 +55,13 @@ instance Arrow (~>) => Arrow (Bijection (~>)) where
   first  (Bi ab ba) = Bi (first  ab) (first  ba)
   second (Bi ab ba) = Bi (second ab) (second ba)
   Bi ab ba *** Bi cd dc = Bi (ab *** cd) (ba *** dc)
+  (&&&) = error "No (***) for (:<->:)"
   -- Can't really define (&&&) unless we have a way to merge two @a@ values.
   -- Bi ab ba &&& Bi ac ca = Bi (ab &&& ac) (ba &&& ???)
 
--- Most but not all DeepArrow operations can be defined.  No fstA, sndA.
+-- Most but not all DeepArrow operations can be defined.  No @fstA@, @sndA@.
 
--- The (***) operator creates bijections on pairs.  Here are some similar tools.
+-- The '(***)' operator creates bijections on pairs.  Here are some similar tools.
 
 -- | Bijections on functors
 bimap :: Functor f => (a :<->: b) -> (f a :<->: f b)

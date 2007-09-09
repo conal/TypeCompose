@@ -34,8 +34,9 @@ Exposed-Modules:
                      Data.CxMonoid
                      Data.RefMonad
                      Data.Pair
-                     Data.Fun
+                     Data.Lambda
                      Data.Title
+		     Data.Partial
                      Control.Instances
                      Control.Compose
 Extra-Source-Files:

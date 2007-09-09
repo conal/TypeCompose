@@ -19,20 +19,36 @@
 
 module Control.Compose
   ( Unop, Binop
+  -- * Contravariant functors
   , Cofunctor(..), bicomap
+  -- * Type compositions
+  -- ** Unary/unary
   , O(..), biO, convO, coconvO, inO, inO2, inO3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
+  -- ** Unary/binary
   , OO(..)
-  , Monoid_f(..)
-  , Flip(..), biFlip, inFlip, inFlip2, inFlip3, OI, ToOI(..)
-  , ArrowAp(..)
+--   -- ** Binary/unary
+--   , ArrowAp(..),
+  -- ** (->)/unary
   , FunA(..), inFunA, inFunA2, FunAble(..)
+  -- * Monoid constructors
+  , Monoid_f(..)
+  -- * Flip a binary constructor's type arguments
+  , Flip(..), biFlip, inFlip, inFlip2, inFlip3, OI, ToOI(..)
+  -- * Type application
   , App(..), biApp, inApp, inApp2
+  -- * Identity
   , Id(..), biId, inId
+  -- * Constructor pairing
+  -- ** Unary
   , (:*:)(..), biProd, convProd, (***#), ($*), inProd, inProd2, inProd3
+  -- ** Binary
   , (::*::)(..), inProdd, inProdd2
+  -- * Arrow between /two/ constructor applications
   , Arrw(..), (:->:)
   , biFun, convFun, inArrw, inArrw2, inArrw3
+  -- * Augment other modules
+  -- ** For 'Control.Applicative'
   , biConst, inConst, inConst2, inConst3
   , biEndo, inEndo
   ) where
@@ -52,17 +68,30 @@ infixr 1 :->:
 infixl 0 $*
 infixr 3 ***#
 
+{----------------------------------------------------------
+    Misc
+----------------------------------------------------------}
 
 type Unop  a = a -> a                   -- ^ Unary functions
 type Binop a = a -> a -> a              -- ^ Binary functions
 
--- | Often useful for /acceptors/ (consumers, sinks) of values.
+
+{----------------------------------------------------------
+    Contravariant functors
+----------------------------------------------------------}
+
+-- | Contravariant functors.  often useful for /acceptors/ (consumers,
+-- sinks) of values.
 class Cofunctor acc where
   cofmap :: (a -> b) -> (acc b -> acc a)
 
 -- | Bijections on contravariant functors
 bicomap :: Cofunctor f => (a :<->: b) -> (f a :<->: f b)
 bicomap (Bi ab ba) = Bi (cofmap ba) (cofmap ab)
+
+{----------------------------------------------------------
+    Type composition
+----------------------------------------------------------}
 
 {- |
 
@@ -107,7 +136,6 @@ someday Haskell will do Prolog-style search for instances, subgoaling the
 constraints, rather than just matching instance heads.
 
 -}
-
 newtype (g `O` f) a = O { unO :: g (f a) }
 
 -- Here it is, as promised.
@@ -126,34 +154,35 @@ coconvO :: Cofunctor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g `O` f) a
 coconvO biG biF = biG >>> bicomap biF >>> Bi O unO
 
 
--- | Apply a function within the 'O' constructor.
+-- | Apply a unary function within the 'O' constructor.
 inO :: (g (f a) -> g' (f' a')) -> ((g `O` f) a -> (g' `O` f') a')
 inO = (O .).(. unO)
 
+-- | Apply a binary function within the 'O' constructor.
 inO2 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a''))
      -> ((g `O` f) a -> (g' `O` f') a' -> (g'' `O` f'') a'')
 inO2 h (O gfa) = inO (h gfa)
 
+-- | Apply a ternary function within the 'O' constructor.
 inO3 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a'')   -> g''' (f''' a'''))
      -> ((g `O` f) a -> (g' `O` f') a' -> (g'' `O` f'') a'' -> (g''' `O` f''') a''')
 inO3 h (O gfa) = inO2 (h gfa)
 
--- | Used for the Functor `O` Functor instance of Functor
+-- | Used for the @Functor `O` Functor@ instance of 'Functor'
 fmapFF :: (  Functor g,   Functor f) => (a -> b) -> (g `O` f) a -> (g `O` f) b
 fmapFF h = inO $ fmap (fmap h)
 
--- | Used for the Cofunctor `O` Cofunctor instance of Functor
+-- | Used for the @Cofunctor `O` Cofunctor@ instance of 'Functor'
 fmapCC :: (Cofunctor g, Cofunctor f) => (a -> b) -> (g `O` f) a -> (g `O` f) b
 fmapCC h = inO $ cofmap (cofmap h)
 
--- | Used for the Functor `O` Cofunctor instance of Functor
+-- | Used for the @Functor `O` Cofunctor@ instance of 'Functor'
 cofmapFC :: (Functor g, Cofunctor f) => (b -> a) -> (g `O` f) a -> (g `O` f) b
 cofmapFC h (O gf) = O (fmap (cofmap h) gf)
 
--- | Used for the Cofunctor `O` Functor instance of Functor
+-- | Used for the @Cofunctor `O` Functor@ instance of 'Functor'
 cofmapCF :: (Cofunctor g, Functor f) => (b -> a) -> (g `O` f) a -> (g `O` f) b
 cofmapCF h (O gf) = O (cofmap (fmap h) gf)
-
 
 instance ( Functor (g `O` f)
          , Applicative g, Applicative f) => Applicative (g `O` f) where
@@ -161,7 +190,9 @@ instance ( Functor (g `O` f)
   O getf <*> O getx = O (liftA2 (<*>) getf getx)
 
 
-
+{----------------------------------------------------------
+    Unary/binary composition
+----------------------------------------------------------}
 
 -- | Composition of type constructors: unary with binary.  Called
 -- "StaticArrow" in [1].
@@ -174,6 +205,11 @@ instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
 
 -- For instance, /\ a b. f (a -> m b) =~ OO f Kleisli m
 
+{-
+
+{----------------------------------------------------------
+    Binary/unary composition.  * Not currently exported *
+----------------------------------------------------------}
 
 -- | Composition of type constructors: binary with unary.  See also
 -- 'FunA', which specializes from arrows to functions.
@@ -185,10 +221,11 @@ instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
 -- the applicative functor @f@.
 -- 
 -- See also "Arrows and Computation", which notes that the following type
--- is "almost an arrow" (http://www.soi.city.ac.uk/~ross/papers/fop.html).
+-- is "almost an arrow" (<http://www.soi.city.ac.uk/~ross/papers/fop.html>).
 -- 
--- > newtype ListMap i o = LM ([i] -> [o])
-
+-- @
+--   newtype ListMap i o = LM ([i] -> [o])
+-- @
 
 newtype ArrowAp (~>) f a b = ArrowAp {unArrowAp :: f a ~> f b}
 
@@ -209,6 +246,12 @@ mergeA ~(fa,fb) = liftA2 (,) fa fb
 splitA :: Applicative f => f (a,b) -> (f a, f b)
 splitA fab = (liftA fst fab, liftA snd fab)
 
+-}
+
+
+{----------------------------------------------------------
+    (->)/unary composition
+----------------------------------------------------------}
 
 -- Hm.  See warning above for 'ArrowAp'
 
@@ -227,12 +270,15 @@ inFunA2 q (FunA f) = inFunA (q f)
 
 -- | Support needed for a 'FunA' to be an 'Arrow'.
 class FunAble h where
-  arrFun    :: (a -> b) -> (h a -> h b)
-  firstFun  :: (h a -> h a') -> (h (a,b) -> h (a',b))
-  secondFun :: (h b -> h b') -> (h (a,b) -> h (a,b'))
-  (***%)    :: (h a -> h b) -> (h a' -> h b') -> (h (a,a') -> h (b,b'))
-  (&&&%)    :: (h a -> h b) -> (h a  -> h b') -> (h a -> h (b,b'))
+  arrFun    :: (a -> b) -> (h a -> h b) -- ^ for 'arr'
+  firstFun  :: (h a -> h a') -> (h (a,b) -> h (a',b)) -- for 'first'
+  secondFun :: (h b -> h b') -> (h (a,b) -> h (a,b')) -- for 'second'
+  (***%)    :: (h a -> h b) -> (h a' -> h b') -> (h (a,a') -> h (b,b')) -- for '(***)'
+  (&&&%)    :: (h a -> h b) -> (h a  -> h b') -> (h a -> h (b,b')) -- for '(&&&)'
 
+  -- In direct imitation of Arrow defaults:
+  f ***% g = firstFun f >>> secondFun g
+  f &&&% g = arrFun (\b -> (b,b)) >>> f ***% g
 
 instance FunAble h => Arrow (FunA h) where
   arr p  = FunA    (arrFun p)
@@ -244,30 +290,31 @@ instance FunAble h => Arrow (FunA h) where
 
 
 
+{----------------------------------------------------------
+    Monoid constructors
+----------------------------------------------------------}
+
 -- | Simulates universal constraint @forall a. Monoid (f a)@.
 -- 
 -- See Simulating Quantified Class Constraints
 -- (<http://flint.cs.yale.edu/trifonov/papers/sqcc.pdf>)
 --  Instantiate this schema wherever necessary:
--- 
+--
+-- @
 --   instance Monoid_f f where { mempty_f = mempty ; mappend_f = mappend }
--- 
+-- @
 class Monoid_f m where
   mempty_f  :: forall a. m a
   mappend_f :: forall a. m a -> m a -> m a
-
--- instance Monoid_f g => Monoid_f (g `O` f) where
---   mempty_f  = mempty
---   mappend_f = mappend
 
 --  e.g.,
 instance Monoid_f [] where { mempty_f = mempty ; mappend_f = mappend }
 
 
--- instance Monoid (g (f a)) => Monoid ((g `O` f) a) where
---   mempty  = O mempty
---   mappend = inO2 mappend
 
+{----------------------------------------------------------
+    Flip a binary constructor's type arguments
+----------------------------------------------------------}
 
 -- | Flip type arguments
 newtype Flip (~>) b a = Flip { unFlip :: a ~> b }
@@ -310,7 +357,20 @@ class ToOI sink where toOI :: sink b -> OI b
 
 instance ToOI OI where toOI = id
 
+{----------------------------------------------------------
+    Type application
+----------------------------------------------------------}
+
 -- | Type application
+-- We can also drop the @App@ constructor, but then we overlap with many
+-- other instances, like @[a]@.  Here's a template for @App@-free
+-- instances.
+-- 
+-- @
+--   instance (Applicative f, Monoid a) => Monoid (f a) where
+--     mempty  = pure mempty
+--     mappend = liftA2 mappend
+-- @
 newtype App f a = App { unApp :: f a }
 
 -- | @newtype@ bijection
@@ -331,14 +391,9 @@ instance (Applicative f, Monoid m) => Monoid (App f m) where
   App a `mappend` App b = App (liftA2 mappend a b)
 
 
-{-
--- We can also drop the App constructor, but then we overlap with many
--- other instances, like [a].
-instance (Applicative f, Monoid a) => Monoid (f a) where
-  mempty  = pure mempty
-  mappend = liftA2 mappend
--}
-
+{----------------------------------------------------------
+    Identity
+----------------------------------------------------------}
 
 -- | Identity type constructor.  Until there's a better place to find it.
 -- I'd use "Control.Monad.Identity", but I don't want to introduce a
@@ -352,6 +407,11 @@ inId = (Id .).(. unId)
 biId :: a :<->: Id a
 biId = Bi Id unId
 
+
+{----------------------------------------------------------
+    Unary constructor pairing
+----------------------------------------------------------}
+
 -- | Pairing of unary type constructors
 newtype (f :*: g) a = Prod { unProd :: (f a, g a) }
   -- deriving (Show, Eq, Ord)
@@ -364,7 +424,8 @@ biProd = Bi Prod unProd
 convProd :: (b :<->: f a) -> (c :<->: g a) -> (b,c) :<->: (f :*: g) a
 convProd biF biG = biF *** biG >>> Bi Prod unProd
 
--- In GHC 6.7, deriving no longer works on types like :*:.  So:
+-- In GHC 6.7, deriving no longer works on types like :*:.  Take out the
+-- following three instances when deriving works again, in GHC 6.8.
 
 instance (Show (f a, g a)) => Show ((f :*: g) a) where
   show (Prod p) = "Prod " ++ show p
@@ -417,11 +478,16 @@ instance (Monoid_f f, Monoid_f g) => Monoid_f (f :*: g) where
 instance (Functor f, Functor g) => Functor (f :*: g) where
   fmap h = inProd (fmap h *** fmap h)
 
-------
+
+{----------------------------------------------------------
+    Binary constructor pairing
+----------------------------------------------------------}
 
 -- | Pairing of binary type constructors
 newtype (f ::*:: g) a b = Prodd { unProdd :: (f a b, g a b) }
   -- deriving (Show, Eq, Ord)
+
+-- Remove the next three when GHC can derive them (6.8).
 
 instance (Show (f a b, g a b)) => Show ((f ::*:: g) a b) where
   show (Prodd p) = "Prod " ++ show p
@@ -451,7 +517,9 @@ instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
   (&&&)  = inProdd2 ((&&&)  ***# (&&&) )
 
 
-------
+{----------------------------------------------------------
+    Arrow between /two/ constructor applications
+----------------------------------------------------------}
 
 -- | Arrow-like type between type constructors (doesn't enforce @Arrow
 -- (~>)@ here).
@@ -508,6 +576,10 @@ convFun bfa cga = (bfa ---> cga) >>> biFun
 -- biA :: ((f a -> g a) :<->: (f :->: g) a)
 -- biA = Bi Arrw unArrw
 
+
+{----------------------------------------------------------
+    Augment other modules
+----------------------------------------------------------}
 
 ---- For Control.Applicative Const
 

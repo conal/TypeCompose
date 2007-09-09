@@ -2,6 +2,8 @@
 
 ## Version 0.2#
 
++  More comments
++  Added [Data.Partial](src/Data/Partial.hs): partial values.
 +  [Data.Bijection](src/Data/Bijection.hs): bijective arrows.  Used in
    [Control.Compose] for composing representation transformations.
 +  Using `LANGUAGE` instead of `OPTIONS` pragmas

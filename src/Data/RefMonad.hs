@@ -10,8 +10,12 @@
 -- Stability   :  experimental
 -- Portability :  MPTC
 -- 
--- Monads with references.  From John Hughes' "Global Variables in
--- Haskell" functional pearl.
+-- Monads with references, taken from John Hughes's [Global].
+-- 
+--  [Global] <http://citeseer.ist.psu.edu/473734.html>
+--           "Global Variables in Haskell"
+
+
 ----------------------------------------------------------------------
 
 module Data.RefMonad (RefMonad(..), modifyRef) where
@@ -38,7 +42,6 @@ instance RefMonad (ST s) (STRef s) where
     readRef  =  readSTRef
     writeRef =  writeSTRef
 
-
--- | Change the contents of an 'Ref'
+-- | Change the contents of a ref
 modifyRef :: RefMonad m r => r a -> (a -> a) -> m ()
-modifyRef ref f = writeRef ref . f =<< readRef ref
+modifyRef ref f = readRef ref >>= writeRef ref . f
