@@ -55,6 +55,7 @@ type PairTy f = forall a b. f a -> f b -> f (a,b)
 --       pair = arPair
 --   instance (Monoid_f h, Copair h) => Pair h where
 --       pair = copair
+-- @
 
 class Pair f where
   pair :: PairTy f         -- ^ Form a pair-like value (generalizes 'zip')

@@ -1,6 +1,5 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE TypeOperators #-}
 
--- TypeOperators
 
 ----------------------------------------------------------------------
 -- |

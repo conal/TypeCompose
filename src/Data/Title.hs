@@ -34,7 +34,7 @@ import Control.Compose (Flip(..),inFlip,O,inO)
 -- @UndecidableInstances@.  The more specific instance (yours) wins.
 -- 
 -- In defining your instance, you might want to use the String instance,
--- e.g., @title ttl ""@.
+-- e.g., @title ttl \"\"@.
 class Title u where title :: String -> u -> u
 
 -- Polymorphic version of 'Title'.  See 'Title' doc.

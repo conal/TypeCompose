@@ -21,15 +21,15 @@ module Control.Compose
   ( Unop, Binop
   -- * Contravariant functors
   , Cofunctor(..), bicomap
-  -- * Type compositions
-  -- ** Unary/unary
+  -- * Unary\/unary composition
   , O(..), biO, convO, coconvO, inO, inO2, inO3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
-  -- ** Unary/binary
+  -- * Type composition
+  -- ** Unary\/binary
   , OO(..)
---   -- ** Binary/unary
+--   -- * Binary\/unary
 --   , ArrowAp(..),
-  -- ** (->)/unary
+  -- ** (->)\/unary
   , FunA(..), inFunA, inFunA2, FunAble(..)
   -- * Monoid constructors
   , Monoid_f(..)
@@ -42,13 +42,12 @@ module Control.Compose
   -- * Constructor pairing
   -- ** Unary
   , (:*:)(..), biProd, convProd, (***#), ($*), inProd, inProd2, inProd3
-  -- ** Binary
+  -- * Binary
   , (::*::)(..), inProdd, inProdd2
   -- * Arrow between /two/ constructor applications
   , Arrw(..), (:->:)
   , biFun, convFun, inArrw, inArrw2, inArrw3
   -- * Augment other modules
-  -- ** For 'Control.Applicative'
   , biConst, inConst, inConst2, inConst3
   , biEndo, inEndo
   ) where
@@ -72,8 +71,10 @@ infixr 3 ***#
     Misc
 ----------------------------------------------------------}
 
-type Unop  a = a -> a                   -- ^ Unary functions
-type Binop a = a -> a -> a              -- ^ Binary functions
+-- |Unary functions
+type Unop  a = a -> a
+-- |Binary functions
+type Binop a = a -> a -> a
 
 
 {----------------------------------------------------------
@@ -124,7 +125,8 @@ Similarly, there are two useful 'Functor' instances and two useful
 @
     instance (  Functor g,   Functor f) => Functor (O g f) where fmap = fmapFF
     instance (Cofunctor g, Cofunctor f) => Functor (O g f) where fmap = fmapCC
-
+@
+@
     instance (Functor g, Cofunctor f) => Cofunctor (O g f) where cofmap = cofmapFC
     instance (Cofunctor g, Functor f) => Cofunctor (O g f) where cofmap = cofmapCF
 @
@@ -191,7 +193,7 @@ instance ( Functor (g `O` f)
 
 
 {----------------------------------------------------------
-    Unary/binary composition
+    Unary\/binary composition
 ----------------------------------------------------------}
 
 -- | Composition of type constructors: unary with binary.  Called
@@ -208,7 +210,7 @@ instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
 {-
 
 {----------------------------------------------------------
-    Binary/unary composition.  * Not currently exported *
+    Binary\/unary composition.  * Not currently exported *
 ----------------------------------------------------------}
 
 -- | Composition of type constructors: binary with unary.  See also
@@ -250,7 +252,7 @@ splitA fab = (liftA fst fab, liftA snd fab)
 
 
 {----------------------------------------------------------
-    (->)/unary composition
+    (->)\/unary composition
 ----------------------------------------------------------}
 
 -- Hm.  See warning above for 'ArrowAp'
