@@ -1,6 +1,11 @@
 % TypeCompose changes
 
-## Version 0.2#
+== Version 0.2.1 ==
+
+* Copair for Const
+* Changed functional dependency for RefMonad
+
+## Version 0.2 ##
 
 +  More comments
 +  Added [Data.Partial](src/Data/Partial.hs): partial values.
@@ -24,7 +29,7 @@
 +  `FunA` and `FunAble`, for convenient `Arrow` definitions.  See also `FunD` &
    `FunDble` in [DeepArrow].
 
-## Version 0.1 #
+## Version 0.1 ##
 
 +  Renamed "Compose/Comp/unComp" to "O/O/unO".
 +  Renamed "onComp" to "inO"

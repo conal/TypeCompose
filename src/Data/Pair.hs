@@ -146,6 +146,10 @@ class Copair f where
   cofst :: f a -> f (a,b)               -- ^ Pair-like value from first part
   cosnd :: f b -> f (a,b)               -- ^ Pair-like value from second part
 
+instance Copair (Const e) where
+  cofst = inConst id
+  cosnd = inConst id
+
 -- Standard instance for contravariant functors
 instance Arrow (~>) => Copair (Flip (~>) o) where
   { cofst = cofmap fst ; cosnd = cofmap snd }

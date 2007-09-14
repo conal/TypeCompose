@@ -126,6 +126,7 @@ Similarly, there are two useful 'Functor' instances and two useful
     instance (  Functor g,   Functor f) => Functor (O g f) where fmap = fmapFF
     instance (Cofunctor g, Cofunctor f) => Functor (O g f) where fmap = fmapCC
 @
+
 @
     instance (Functor g, Cofunctor f) => Cofunctor (O g f) where cofmap = cofmapFC
     instance (Cofunctor g, Functor f) => Cofunctor (O g f) where cofmap = cofmapCF
