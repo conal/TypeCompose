@@ -65,6 +65,8 @@ instance Monoid u => Pair ((,)  u) where pair = liftA2 (,)
 instance             Pair ((->) u) where pair = liftA2 (,)
 instance             Pair IO       where pair = liftA2 (,)
 
+instance Monoid o => Pair (Const o) where
+  pair = inConst2 mappend
 
 instance Pair Id where Id a `pair` Id b = Id (a,b)
 
@@ -165,7 +167,6 @@ instance (Copair f, Copair g) => Copair (f :*: g) where
 -- | Pairing of 'Copair' values.  Combines contribution of each.
 copair :: (Copair f, Monoid_f f) => PairTy f
 fa `copair` fb = cofst fa `mappend_f` cosnd fb
-
 
 -- Control.Applicative.Endo
 -- Handy for "partial values" <http://haskell.org/haskellwiki/Partial>

@@ -2,7 +2,7 @@
 
 == Version 0.2.1 ==
 
-* Copair for Const
+* Pair & Copair for Const
 * Changed functional dependency for RefMonad
 
 ## Version 0.2 ##
