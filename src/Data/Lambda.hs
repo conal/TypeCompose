@@ -37,24 +37,24 @@ import Data.Bijection
     Make function-like things
 ----------------------------------------------------------}
 
--- | Type of 'lambda' method.  Think of @dom@ as the bound variable (or
--- pattern) part of a lambda and @ran@ as the expression part.  They
+-- | Type of 'lambda' method.  Think of @src@ as the bound variable (or
+-- pattern) part of a lambda and @snk@ as the expression part.  They
 -- combine to form a function-typed expression. 
 -- Instance template:
 -- 
 -- @
---   instance (Applicative f, Lambda dom ran)
---     => Lambda (f `O` dom) (f `O` ran) where
+--   instance (Applicative f, Lambda src snk)
+--     => Lambda (f `O` src) (f `O` snk) where
 --       lambda = apLambda
 -- @
-type LambdaTy dom ran = forall a b. dom a -> ran b -> ran (a -> b)
+type LambdaTy src snk = forall a b. src a -> snk b -> snk (a -> b)
 
 -- | Type constructor class for function-like things having lambda-like construction.
-class Lambda dom ran where
-  lambda :: LambdaTy dom ran            -- ^ Form a function-like value
+class Lambda src snk where
+  lambda :: LambdaTy src snk            -- ^ Form a function-like value
 
 -- | Handy for 'Applicative' functor instances of 'Lambda'
-apLambda :: (Applicative f, Lambda dom ran) => LambdaTy (f `O` dom) (f `O` ran)
+apLambda :: (Applicative f, Lambda src snk) => LambdaTy (f `O` src) (f `O` snk)
 apLambda = inO2 (liftA2 lambda)
 
 -- Helper
@@ -72,7 +72,7 @@ instance Lambda IO OI where
 -- f a & f (b -> o)
 instance Applicative f => Lambda f (f `O` Flip (->) o) where
   -- Map f a -> (f `O` Id) a, and appeal to the O/O and Id/Flip instances
-  lambda dom ran = apLambda (O (fmap Id dom)) ran
+  lambda src snk = apLambda (O (fmap Id src)) snk
 
 -- f a & (f b -> o)
 instance Applicative f => Lambda f (Flip (->) o `O` f) where
@@ -84,10 +84,10 @@ instance Applicative f => Lambda f (Flip (->) o `O` f) where
 instance Applicative f => Lambda f (f :->: Const o) where
   lambda a b = biTo bi (apLambda' a (biFrom bi b))
    where
-     bi = convFun idb biConst
+     bi = idb `convFun` biConst
 
-instance (Lambda dom ran, Lambda dom' ran')
-  => Lambda (dom :*: dom') (ran :*: ran') where
+instance (Lambda src snk, Lambda dom' ran')
+  => Lambda (src :*: dom') (snk :*: ran') where
     lambda = inProd2 (lambda ***# lambda)
 
 -- | 'lambda' with 'Arrw'.  /Warning/: definition uses 'arr', so only
@@ -108,13 +108,13 @@ instance (Arrow (~>), Unlambda f f', Lambda g g')
 
 -- | Like @Unpair@, but for functions.  Minimal instance definition: either (a)
 -- 'unlambda' /or/ (b) both of 'fsrc' /and/ 'fres'.
-class Unlambda dom ran | ran -> dom where
+class Unlambda src snk | snk -> src where
   -- | Deconstruct pair-like value
-  unlambda :: ran (a -> b) -> (dom a, ran b)
+  unlambda :: snk (a -> b) -> (src a, snk b)
   -- | First part of pair-like value
-  fsrc     :: ran (a -> b) -> dom a
+  fsrc     :: snk (a -> b) -> src a
   -- | Second part of pair-like value
-  fres     :: ran (a -> b) -> ran b
+  fres     :: snk (a -> b) -> snk b
   unlambda = fsrc &&& fres
   fsrc     = fst.unlambda
   fres     = snd.unlambda

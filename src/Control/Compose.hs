@@ -1,4 +1,7 @@
-{-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, UndecidableInstances, TypeSynonymInstances, TypeOperators #-}
+{-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses
+           , FlexibleContexts, UndecidableInstances, TypeSynonymInstances
+           , TypeOperators, GeneralizedNewtypeDeriving, StandaloneDeriving
+  #-}
 
 
 ----------------------------------------------------------------------
@@ -528,6 +531,8 @@ instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
 -- (~>)@ here).
 newtype Arrw (~>) f g a = Arrw { unArrw :: f a ~> g a }
 
+deriving instance Monoid (f a ~> g a) => Monoid (Arrw (~>) f g a)
+
 -- Replace with generalized bijection?
 
 -- toArrw :: Arrow (~>) => (f a ~> b) -> (c ~> g a) -> ((b ~> c) -> Arrw (~>) f g a)
@@ -563,7 +568,6 @@ instance (Arrow (~>), Functor f, Cofunctor g) => Cofunctor (Arrw (~>) f g) where
 -- Restated,
 -- 
 --   cofmap h = inArrw $ (arr (fmap h) >>>) . (>>> arr (cofmap h))
-
 
 -- 'Arrw' specialized to functions.  
 type (:->:) = Arrw (->)
@@ -604,6 +608,9 @@ inConst3 f (Const a) = inConst2 (f a)
 
 
 ---- For Control.Applicative.Endo
+
+deriving instance Monoid o => Monoid (Const o a)
+
 
 -- newtype Endo a = Endo { appEndo :: a -> a }
 
