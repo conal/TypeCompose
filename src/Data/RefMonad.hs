@@ -27,7 +27,7 @@ import Control.Monad.ST (ST)
 -------------------------------------------------------------------------------
 
 -- | Class of monads with references.
-class Monad m => RefMonad m r | m -> r {-, r -> m-} where
+class Monad m => RefMonad m r | m -> r, r -> m where
     newRef   :: a -> m (r a)
     readRef  :: r a -> m a
     writeRef :: r a -> a -> m ()
