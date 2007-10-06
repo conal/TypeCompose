@@ -1,4 +1,6 @@
-{-# LANGUAGE TypeSynonymInstances, TypeOperators, GeneralizedNewtypeDeriving #-}
+-- {-# LANGUAGE TypeSynonymInstances, TypeOperators, GeneralizedNewtypeDeriving #-}
+-- Temp, for ghc 6.6 compatibility
+{-# OPTIONS -fglasgow-exts #-}
 
 ----------------------------------------------------------------------
 -- |

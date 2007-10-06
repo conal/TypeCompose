@@ -1,4 +1,6 @@
-{-# LANGUAGE Rank2Types, TypeOperators, FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
+-- {-# LANGUAGE Rank2Types, TypeOperators, FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
+-- Temp, for ghc 6.6 compatibility
+{-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
 
 ----------------------------------------------------------------------
 -- |

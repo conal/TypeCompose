@@ -1,4 +1,6 @@
-{-# LANGUAGE FlexibleInstances, OverlappingInstances, TypeOperators, TypeSynonymInstances #-}
+-- {-# LANGUAGE FlexibleInstances, OverlappingInstances, TypeOperators, TypeSynonymInstances #-}
+-- Temp, for ghc 6.6 compatibility
+{-# OPTIONS -fglasgow-exts -fallow-overlapping-instances #-}
 
 ----------------------------------------------------------------------
 -- |

@@ -1,7 +1,9 @@
-{-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses
-           , FlexibleContexts, UndecidableInstances, TypeSynonymInstances
-           , TypeOperators, GeneralizedNewtypeDeriving, StandaloneDeriving
-  #-}
+-- {-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses
+--            , FlexibleContexts, UndecidableInstances, TypeSynonymInstances
+--            , TypeOperators, GeneralizedNewtypeDeriving, StandaloneDeriving
+--   #-}
+-- Temp, for ghc 6.6 compatibility
+{-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
 
 
 ----------------------------------------------------------------------
@@ -529,9 +531,9 @@ instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
 
 -- | Arrow-like type between type constructors (doesn't enforce @Arrow
 -- (~>)@ here).
-newtype Arrw (~>) f g a = Arrw { unArrw :: f a ~> g a }
+newtype Arrw (~>) f g a = Arrw { unArrw :: f a ~> g a } deriving Monoid
 
-deriving instance Monoid (f a ~> g a) => Monoid (Arrw (~>) f g a)
+-- deriving instance Monoid (f a ~> g a) => Monoid (Arrw (~>) f g a)
 
 -- Replace with generalized bijection?
 
@@ -609,8 +611,10 @@ inConst3 f (Const a) = inConst2 (f a)
 
 ---- For Control.Applicative.Endo
 
-deriving instance Monoid o => Monoid (Const o a)
-
+-- deriving instance Monoid o => Monoid (Const o a)
+instance Monoid o => Monoid (Const o a) where
+  mempty  = Const mempty
+  mappend = inConst2 mappend
 
 -- newtype Endo a = Endo { appEndo :: a -> a }
 

@@ -1,4 +1,6 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+-- {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+-- Temp, for ghc 6.6 compatibility
+{-# OPTIONS -fglasgow-exts #-}
 
 ----------------------------------------------------------------------
 -- |
