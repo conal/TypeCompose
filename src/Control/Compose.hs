@@ -395,12 +395,14 @@ inApp2 h (App fa) = inApp (h fa)
 
 -- Example: App IO ()
 instance (Applicative f, Monoid m) => Monoid (App f m) where
-  mempty = App (pure mempty)
-  App a `mappend` App b = App (liftA2 mappend a b)
+  mempty  = App    (pure   mempty )
+  mappend = inApp2 (liftA2 mappend)
+
+--  App a `mappend` App b = App (liftA2 mappend a b)
 
 
 {----------------------------------------------------------
-    Identity
+    Identity -- TODO: eliminate in favor of Data.Traversable.Id
 ----------------------------------------------------------}
 
 -- | Identity type constructor.  Until there's a better place to find it.
@@ -531,9 +533,9 @@ instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
 
 -- | Arrow-like type between type constructors (doesn't enforce @Arrow
 -- (~>)@ here).
-newtype Arrw (~>) f g a = Arrw { unArrw :: f a ~> g a } deriving Monoid
+newtype Arrw (~>) f g a = Arrw { unArrw :: f a ~> g a } -- deriving Monoid
 
--- deriving instance Monoid (f a ~> g a) => Monoid (Arrw (~>) f g a)
+deriving instance Monoid (f a ~> g a) => Monoid (Arrw (~>) f g a)
 
 -- Replace with generalized bijection?
 
