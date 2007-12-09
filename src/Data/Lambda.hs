@@ -1,6 +1,7 @@
--- {-# LANGUAGE Rank2Types, TypeOperators, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, TypeSynonymInstances #-}
--- Temp, for ghc 6.6 compatibility
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE Rank2Types, TypeOperators, MultiParamTypeClasses
+  , FunctionalDependencies, FlexibleInstances, TypeSynonymInstances #-}
+-- -- For ghc 6.6 compatibility
+-- {-# OPTIONS -fglasgow-exts #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -46,7 +47,7 @@ import Data.Bijection
 -- 
 -- @
 --   instance (Applicative f, Lambda src snk)
---     => Lambda (f `O` src) (f `O` snk) where
+--     => Lambda (f :. src) (f :. snk) where
 --       lambda = apLambda
 -- @
 type LambdaTy src snk = forall a b. src a -> snk b -> snk (a -> b)
@@ -56,7 +57,7 @@ class Lambda src snk where
   lambda :: LambdaTy src snk            -- ^ Form a function-like value
 
 -- | Handy for 'Applicative' functor instances of 'Lambda'
-apLambda :: (Applicative f, Lambda src snk) => LambdaTy (f `O` src) (f `O` snk)
+apLambda :: (Applicative f, Lambda src snk) => LambdaTy (f :. src) (f :. snk)
 apLambda = inO2 (liftA2 lambda)
 
 -- Helper
@@ -72,12 +73,12 @@ instance Lambda IO OI where
   lambda geta (Flip snkb) = Flip (\ f -> fmap f geta >>= snkb)
 
 -- f a & f (b -> o)
-instance Applicative f => Lambda f (f `O` Flip (->) o) where
-  -- Map f a -> (f `O` Id) a, and appeal to the O/O and Id/Flip instances
+instance Applicative f => Lambda f (f :. Flip (->) o) where
+  -- Map f a -> (f :. Id) a, and appeal to the O/O and Id/Flip instances
   lambda src snk = apLambda (O (fmap Id src)) snk
 
 -- f a & (f b -> o)
-instance Applicative f => Lambda f (Flip (->) o `O` f) where
+instance Applicative f => Lambda f (Flip (->) o :. f) where
   lambda a b = biTo bi (apLambda' a (biFrom bi b))
    where
      bi = coconvO biFlip idb

@@ -1,10 +1,11 @@
--- {-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses
---            , FlexibleContexts, UndecidableInstances, TypeSynonymInstances
---            , TypeOperators, GeneralizedNewtypeDeriving, StandaloneDeriving
---   #-}
--- Temp, for ghc 6.6 compatibility
-{-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
+{-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses
+           , FlexibleContexts, UndecidableInstances, TypeSynonymInstances
+           , TypeOperators, GeneralizedNewtypeDeriving, StandaloneDeriving
+  #-}
+-- For ghc 6.6 compatibility
+-- {-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -27,7 +28,7 @@ module Control.Compose
   -- * Contravariant functors
   , Cofunctor(..), bicomap
   -- * Unary\/unary composition
-  , O(..), biO, convO, coconvO, inO, inO2, inO3
+  , (:.)(..), O, biO, convO, coconvO, inO, inO2, inO3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
   -- * Type composition
   -- ** Unary\/binary
@@ -41,7 +42,7 @@ module Control.Compose
   -- * Flip a binary constructor's type arguments
   , Flip(..), biFlip, inFlip, inFlip2, inFlip3, OI, ToOI(..)
   -- * Type application
-  , App(..), biApp, inApp, inApp2
+  , (:$)(..), App, biApp, inApp, inApp2
   -- * Identity
   , Id(..), biId, inId
   -- * Constructor pairing
@@ -65,9 +66,10 @@ import Data.Monoid
 
 import Data.Bijection
 
-infixl 9 `O`
+infixl 9 :. -- , `O`
 infixl 7 :*:
 infixr 1 :->:
+infixr 0 :$
 
 infixl 0 $*
 infixr 3 ***#
@@ -108,19 +110,19 @@ pick one and type-specialize it (filling in all or parts of @g@ and\/or @f@).
 
 @
     -- standard Monoid instance for Applicative applied to Monoid
-    instance (Applicative (O g f), Monoid a) => Monoid (O g f a) where
+    instance (Applicative (g :. f), Monoid a) => Monoid ((g :. f) a) where
       { mempty = pure mempty; mappend = liftA2 mappend }
     -- Especially handy when g is a Monoid_f.
-    instance Monoid (g (f a)) => Monoid (O g f a) where
+    instance Monoid (g (f a)) => Monoid ((g :. f) a) where
       { mempty = O mempty; mappend = inO2 mappend }
 @
 
 Corresponding to the first and second definitions above,
 
 @
-    instance (Applicative g, Monoid_f f) => Monoid_f (O g f) where
+    instance (Applicative g, Monoid_f f) => Monoid_f (g :. f) where
       { mempty_f = O (pure mempty_f); mappend_f = inO2 (liftA2 mappend_f) }
-    instance Monoid_f g => Monoid_f (O g f) where
+    instance Monoid_f g => Monoid_f (g :. f) where
       { mempty_f = O mempty_f; mappend_f = inO2 mappend_f }
 @
 
@@ -128,13 +130,13 @@ Similarly, there are two useful 'Functor' instances and two useful
 'Cofunctor' instances.
 
 @
-    instance (  Functor g,   Functor f) => Functor (O g f) where fmap = fmapFF
-    instance (Cofunctor g, Cofunctor f) => Functor (O g f) where fmap = fmapCC
+    instance (  Functor g,   Functor f) => Functor (g :. f) where fmap = fmapFF
+    instance (Cofunctor g, Cofunctor f) => Functor (g :. f) where fmap = fmapCC
 @
 
 @
-    instance (Functor g, Cofunctor f) => Cofunctor (O g f) where cofmap = cofmapFC
-    instance (Cofunctor g, Functor f) => Cofunctor (O g f) where cofmap = cofmapCF
+    instance (Functor g, Cofunctor f) => Cofunctor (g :. f) where cofmap = cofmapFC
+    instance (Cofunctor g, Functor f) => Cofunctor (g :. f) where cofmap = cofmapCF
 @
 
 However, it's such a bother to define the Functor instances per
@@ -144,56 +146,59 @@ someday Haskell will do Prolog-style search for instances, subgoaling the
 constraints, rather than just matching instance heads.
 
 -}
-newtype (g `O` f) a = O { unO :: g (f a) }
+newtype (g :. f) a = O { unO :: g (f a) }
+
+-- | Compatibility synonym for ('O')
+type O = (:.)
 
 -- Here it is, as promised.
-instance (  Functor g,   Functor f) => Functor (g `O` f) where fmap = fmapFF
+instance (  Functor g,   Functor f) => Functor (g :. f) where fmap = fmapFF
 
 -- | @newtype@ bijection
-biO :: g (f a) :<->: (g `O` f) a
+biO :: g (f a) :<->: (g :. f) a
 biO = Bi O unO
 
 -- | Compose a bijection, Functor style
-convO :: Functor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g `O` f) a)
+convO :: Functor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g :. f) a)
 convO biG biF = biG >>> bimap biF >>> Bi O unO
 
 -- | Compose a bijection, Cofunctor style
-coconvO :: Cofunctor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g `O` f) a)
+coconvO :: Cofunctor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g :. f) a)
 coconvO biG biF = biG >>> bicomap biF >>> Bi O unO
 
 
 -- | Apply a unary function within the 'O' constructor.
-inO :: (g (f a) -> g' (f' a')) -> ((g `O` f) a -> (g' `O` f') a')
+inO :: (g (f a) -> g' (f' a')) -> ((g :. f) a -> (g' :. f') a')
 inO = (O .).(. unO)
 
 -- | Apply a binary function within the 'O' constructor.
 inO2 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a''))
-     -> ((g `O` f) a -> (g' `O` f') a' -> (g'' `O` f'') a'')
+     -> ((g :. f) a -> (g' :. f') a' -> (g'' :. f'') a'')
 inO2 h (O gfa) = inO (h gfa)
 
 -- | Apply a ternary function within the 'O' constructor.
 inO3 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a'')   -> g''' (f''' a'''))
-     -> ((g `O` f) a -> (g' `O` f') a' -> (g'' `O` f'') a'' -> (g''' `O` f''') a''')
+     -> ((g :. f) a -> (g' :. f') a' -> (g'' :. f'') a'' -> (g''' :. f''') a''')
 inO3 h (O gfa) = inO2 (h gfa)
 
--- | Used for the @Functor `O` Functor@ instance of 'Functor'
-fmapFF :: (  Functor g,   Functor f) => (a -> b) -> (g `O` f) a -> (g `O` f) b
+-- | Used for the @Functor :. Functor@ instance of 'Functor'
+fmapFF :: (  Functor g,   Functor f) => (a -> b) -> (g :. f) a -> (g :. f) b
 fmapFF h = inO $ fmap (fmap h)
 
--- | Used for the @Cofunctor `O` Cofunctor@ instance of 'Functor'
-fmapCC :: (Cofunctor g, Cofunctor f) => (a -> b) -> (g `O` f) a -> (g `O` f) b
+-- | Used for the @Cofunctor :. Cofunctor@ instance of 'Functor'
+fmapCC :: (Cofunctor g, Cofunctor f) => (a -> b) -> (g :. f) a -> (g :. f) b
 fmapCC h = inO $ cofmap (cofmap h)
 
--- | Used for the @Functor `O` Cofunctor@ instance of 'Functor'
-cofmapFC :: (Functor g, Cofunctor f) => (b -> a) -> (g `O` f) a -> (g `O` f) b
+-- | Used for the @Functor :. Cofunctor@ instance of 'Functor'
+cofmapFC :: (Functor g, Cofunctor f) => (b -> a) -> (g :. f) a -> (g :. f) b
 cofmapFC h (O gf) = O (fmap (cofmap h) gf)
 
--- | Used for the @Cofunctor `O` Functor@ instance of 'Functor'
-cofmapCF :: (Cofunctor g, Functor f) => (b -> a) -> (g `O` f) a -> (g `O` f) b
+-- | Used for the @Cofunctor :. Functor@ instance of 'Functor'
+cofmapCF :: (Cofunctor g, Functor f) => (b -> a) -> (g :. f) a -> (g :. f) b
 cofmapCF h (O gf) = O (cofmap (fmap h) gf)
 
-instance ( Functor (g `O` f)
-         , Applicative g, Applicative f) => Applicative (g `O` f) where
+instance ( Functor (g :. f)
+         , Applicative g, Applicative f) => Applicative (g :. f) where
   pure x            = O (pure (pure x))
   O getf <*> O getx = O (liftA2 (<*>) getf getx)
 
@@ -379,7 +384,13 @@ instance ToOI OI where toOI = id
 --     mempty  = pure mempty
 --     mappend = liftA2 mappend
 -- @
-newtype App f a = App { unApp :: f a }
+newtype f :$ a = App { unApp :: f a }
+
+-- | Compatibility synonym for (:$).
+type App = (:$)
+
+-- How about?
+-- data f :$ a = App { unApp :: f a }
 
 -- | @newtype@ bijection
 biApp :: f a :<->: App f a
@@ -395,7 +406,7 @@ inApp2 h (App fa) = inApp (h fa)
 
 -- Example: App IO ()
 instance (Applicative f, Monoid m) => Monoid (App f m) where
-  mempty  = App    (pure   mempty )
+  mempty  =   App  (pure   mempty )
   mappend = inApp2 (liftA2 mappend)
 
 --  App a `mappend` App b = App (liftA2 mappend a b)

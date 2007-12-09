@@ -1,6 +1,8 @@
--- {-# LANGUAGE Rank2Types, TypeOperators, FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
--- Temp, for ghc 6.6 compatibility
-{-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
+{-# LANGUAGE Rank2Types, TypeOperators, FlexibleInstances, FlexibleContexts
+           , UndecidableInstances, TypeSynonymInstances #-}
+
+-- -- For ghc 6.6 compatibility
+-- {-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -49,9 +51,9 @@ type PairTy f = forall a b. f a -> f b -> f (a,b)
 -- @
 --   instance Applicative f => Pair f where
 --       pair = liftA2 (,)
---   instance (Applicative h, Pair f) => Pair (h `O` f) where
+--   instance (Applicative h, Pair f) => Pair (h :. f) where
 --       pair = apPair
---   instance (Functor g, Pair g, Pair f) => Pair (g `O` f)
+--   instance (Functor g, Pair g, Pair f) => Pair (g :. f)
 --       where pair = ppPair
 --   instance (Arrow (~>), Unpair f, Pair g) => Pair (Arrw (~>) f g) where
 --       pair = arPair
@@ -79,11 +81,11 @@ instance (Arrow (~>), Monoid_f (Flip (~>) o)) =>
   Pair (Flip (~>) o) where pair = copair
 
 -- | Handy for 'Pair' instances
-apPair :: (Applicative h, Pair f) => PairTy (h `O` f)
+apPair :: (Applicative h, Pair f) => PairTy (h :. f)
 apPair = inO2 (liftA2 pair)
 
 -- | Handy for 'Pair' instances
-ppPair :: (Functor g, Pair g, Pair f) => PairTy (g `O` f)
+ppPair :: (Functor g, Pair g, Pair f) => PairTy (g :. f)
 ppPair = inO2 $ \ gfa gfb -> fmap (uncurry pair) (gfa `pair` gfb)
 
 -- | Pairing of 'Arrw' values.  /Warning/: definition uses 'arr', so only
@@ -158,7 +160,7 @@ instance Copair (Const e) where
 instance Arrow (~>) => Copair (Flip (~>) o) where
   { cofst = cofmap fst ; cosnd = cofmap snd }
 
-instance (Functor h, Copair f) => Copair (h `O` f) where
+instance (Functor h, Copair f) => Copair (h :. f) where
   cofst = inO (fmap cofst)
   cosnd = inO (fmap cosnd)
 

@@ -2,6 +2,9 @@
 
 == Version 0.2.1 ==
 
+* Renamed type constructors "O" and "App" to "(:.)" and "(:$)".  Also
+  include old names for compatibility.
+* Replaced the 6.6-compatible OPTIONS pragmas with LANGUAGE
 * Pair & Copair for Const
 * Changed functional dependency for RefMonad
 

@@ -1,6 +1,6 @@
--- {-# LANGUAGE FlexibleInstances, OverlappingInstances, TypeOperators, TypeSynonymInstances #-}
--- Temp, for ghc 6.6 compatibility
-{-# OPTIONS -fglasgow-exts -fallow-overlapping-instances #-}
+{-# LANGUAGE FlexibleInstances, OverlappingInstances, TypeOperators, TypeSynonymInstances #-}
+-- -- For ghc 6.6 compatibility
+-- {-# OPTIONS -fglasgow-exts -fallow-overlapping-instances #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -21,7 +21,7 @@
 
 module Data.Title (Title(..),Title_f(..)) where
 
-import Control.Compose (Flip(..),inFlip,O,inO)
+import Control.Compose (Flip(..),inFlip,(:.),inO)
 
 -- | Provide a title on a value.  If you can title polymorphically, please
 -- instantiate 'Title_f' instead of Title.  Then you'll automatically
@@ -44,7 +44,7 @@ class Title_f f where
   -- | 'title' for all applications of @f@
   title_f :: String -> f a -> f a
 
-instance Title_f g => Title_f (g `O` f) where title_f str = inO (title_f str)
+instance Title_f g => Title_f (g :. f) where title_f str = inO (title_f str)
 
 instance Title_f f => Title (f a) where title = title_f
 
