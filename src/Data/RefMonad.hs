@@ -6,16 +6,15 @@
 -- |
 -- Module      :  Data.RefMonad
 -- Copyright   :  (c) Conal Elliott 2007
--- License     :  LGPL
+-- License     :  BSD3
 -- 
 -- Maintainer  :  conal@conal.net
 -- Stability   :  experimental
 -- Portability :  MPTC
 -- 
--- Monads with references, taken from John Hughes's [Global].
--- 
---  [Global] <http://citeseer.ist.psu.edu/473734.html>
---           "Global Variables in Haskell"
+-- Monads with references, taken from John Hughes's "Global Variables in
+-- Haskell" (<http://citeseer.ist.psu.edu/473734.html>).
+--           
 
 
 ----------------------------------------------------------------------
