@@ -19,7 +19,7 @@
 -- 
 -- Various type constructor compositions and instances for them.
 -- Some come from 
--- [1] \"Applicative Programming with Effects\"
+-- \"Applicative Programming with Effects\"
 -- <http://www.soi.city.ac.uk/~ross/papers/Applicative.html>
 ----------------------------------------------------------------------
 
@@ -148,7 +148,7 @@ constraints, rather than just matching instance heads.
 -}
 newtype (g :. f) a = O { unO :: g (f a) }
 
--- | Compatibility synonym for ('O')
+-- | Compatibility synonym
 type O = (:.)
 
 -- Here it is, as promised.
@@ -199,8 +199,20 @@ cofmapCF h (O gf) = O (cofmap (fmap h) gf)
 
 instance ( Functor (g :. f)
          , Applicative g, Applicative f) => Applicative (g :. f) where
-  pure x            = O (pure (pure x))
-  O getf <*> O getx = O (liftA2 (<*>) getf getx)
+  pure  = O . pure . pure
+  (<*>) = inO2 (liftA2 (<*>))
+
+
+-- Possible Monoid instances
+
+-- instance (Monoid change, Applicative m, Monoid o)
+--           => Monoid (SourceG change m o) where
+--   mempty  = pure mempty
+--   mappend = liftA2 mappend
+
+-- instance Monoid (g (f a)) => Monoid ((g :. f) a) where
+--   mempty  = O mempty
+--   mappend = inO2 mappend
 
 
 {----------------------------------------------------------

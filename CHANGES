@@ -1,7 +1,8 @@
 % TypeCompose changes
 
-== Version 0.2.1 ==
+== Version 0.3 ==
 
+* Simplified Applicative instance for g :. f
 * Renamed type constructors "O" and "App" to "(:.)" and "(:$)".  Also
   include old names for compatibility.
 * Replaced the 6.6-compatible OPTIONS pragmas with LANGUAGE

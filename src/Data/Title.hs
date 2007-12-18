@@ -12,11 +12,7 @@
 -- Stability   :  experimental
 -- Portability :  portable
 -- 
--- Titling class.  Used in [TV], but provided here, since I want packages
--- like [Phooey] to provide an instance without depending on TV.
--- 
---   [TV]:     <http://haskell.org/haskellwiki/TV>     "Tangible values"
---   [Phooey]: <http://haskell.org/haskellwiki/Phooey> "Functional UIs"
+-- Generic titling (labeling).
 ----------------------------------------------------------------------
 
 module Data.Title (Title(..),Title_f(..)) where
