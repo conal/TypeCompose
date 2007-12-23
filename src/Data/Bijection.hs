@@ -13,12 +13,9 @@
 -- Stability   :  experimental
 -- Portability :  TypeOperators
 -- 
--- Bijections.  See also [1], which provides a more general setting.
--- 
---  [1]: /There and Back Again: Arrows for Invertible Programming/,
---  <http://citeseer.ist.psu.edu/alimarine05there.html>.
--- 
--- 
+-- Bijections.  For a more general setting, see also [1]
+-- /There and Back Again: Arrows for Invertible Programming/,
+-- <http://citeseer.ist.psu.edu/alimarine05there.html>.
 ----------------------------------------------------------------------
 
 module Data.Bijection
