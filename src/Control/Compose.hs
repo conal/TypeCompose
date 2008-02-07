@@ -44,7 +44,7 @@ module Control.Compose
   -- * Type application
   , (:$)(..), App, biApp, inApp, inApp2
   -- * Identity
-  , Id(..), biId, inId
+  , Id(..), biId, inId, inId2
   -- * Constructor pairing
   -- ** Unary
   , (:*:)(..), biProd, convProd, (***#), ($*), inProd, inProd2, inProd3
@@ -230,6 +230,7 @@ instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
 
 -- For instance, /\ a b. f (a -> m b) =~ OO f Kleisli m
 
+
 {-
 
 {----------------------------------------------------------
@@ -251,6 +252,10 @@ instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
 -- @
 --   newtype ListMap i o = LM ([i] -> [o])
 -- @
+--
+-- http://www.cse.unsw.edu.au/~dons/haskell-1990-2006/msg16550.html
+
+-- | 
 
 newtype ArrowAp (~>) f a b = ArrowAp {unArrowAp :: f a ~> f b}
 
@@ -436,10 +441,19 @@ newtype Id a = Id { unId :: a }
 inId :: (a -> b) -> (Id a -> Id b)
 inId = (Id .).(. unId)
 
+inId2 :: (a -> b -> c) -> (Id a -> Id b -> Id c)
+inId2 f (Id a) = inId (f a)
+
 -- | @newtype@ bijection
 biId :: a :<->: Id a
 biId = Bi Id unId
 
+instance Functor Id where
+  fmap f = inId f
+
+instance Applicative Id where
+  pure  = Id
+  (<*>) = inId2 ($)
 
 {----------------------------------------------------------
     Unary constructor pairing
@@ -511,6 +525,9 @@ instance (Monoid_f f, Monoid_f g) => Monoid_f (f :*: g) where
 instance (Functor f, Functor g) => Functor (f :*: g) where
   fmap h = inProd (fmap h *** fmap h)
 
+instance (Applicative f, Applicative g) => Applicative (f :*: g) where
+  pure a = Prod (pure a, pure a)
+  (<*>) = inProd2 (\ (f,g) (a,b) -> (f <*> a, g <*> b))
 
 {----------------------------------------------------------
     Binary constructor pairing
@@ -518,18 +535,18 @@ instance (Functor f, Functor g) => Functor (f :*: g) where
 
 -- | Pairing of binary type constructors
 newtype (f ::*:: g) a b = Prodd { unProdd :: (f a b, g a b) }
-  -- deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord)
 
--- Remove the next three when GHC can derive them (6.8).
+-- -- Remove the next three when GHC can derive them (6.8).
 
-instance (Show (f a b, g a b)) => Show ((f ::*:: g) a b) where
-  show (Prodd p) = "Prod " ++ show p
+-- instance (Show (f a b, g a b)) => Show ((f ::*:: g) a b) where
+--   show (Prodd p) = "Prod " ++ show p
 
-instance (Eq (f a b, g a b)) => Eq ((f ::*:: g) a b) where
-  Prodd p == Prodd q = p == q
+-- instance (Eq (f a b, g a b)) => Eq ((f ::*:: g) a b) where
+--   Prodd p == Prodd q = p == q
 
-instance (Ord (f a b, g a b)) => Ord ((f ::*:: g) a b) where
-  Prodd p < Prodd q = p < q
+-- instance (Ord (f a b, g a b)) => Ord ((f ::*:: g) a b) where
+--   Prodd p < Prodd q = p < q
 
 -- | Apply binary function inside of @f :*: g@ representation.
 inProdd :: ((f a b, g a b) -> (f' a' b', g' a' b'))
@@ -557,6 +574,8 @@ instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
 -- | Arrow-like type between type constructors (doesn't enforce @Arrow
 -- (~>)@ here).
 newtype Arrw (~>) f g a = Arrw { unArrw :: f a ~> g a } -- deriving Monoid
+
+-- For ghc-6.6, use the "deriving" above, but for 6.8 use the "deriving" below.
 
 deriving instance Monoid (f a ~> g a) => Monoid (Arrw (~>) f g a)
 
