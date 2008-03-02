@@ -30,10 +30,10 @@ module Control.Compose
   -- * Unary\/unary composition
   , (:.)(..), O, biO, convO, coconvO, inO, inO2, inO3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
+  , DistribM(..), joinMM
   -- * Type composition
   -- ** Unary\/binary
   , OO(..)
-  , DistribM(..), joinMM
 --   -- * Binary\/unary
 --   , ArrowAp(..),
   -- ** (->)\/unary
