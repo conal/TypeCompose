@@ -33,6 +33,7 @@ module Control.Compose
   -- * Type composition
   -- ** Unary\/binary
   , OO(..)
+  , DistribM, joinMM
 --   -- * Binary\/unary
 --   , ArrowAp(..),
   -- ** (->)\/unary
@@ -59,6 +60,7 @@ module Control.Compose
   ) where
 
 import Control.Applicative
+import Control.Monad (liftM,join)
 import Control.Arrow hiding (pure)
 import Data.Monoid
 
@@ -96,6 +98,7 @@ class Cofunctor acc where
 -- | Bijections on contravariant functors
 bicomap :: Cofunctor f => (a :<->: b) -> (f a :<->: f b)
 bicomap (Bi ab ba) = Bi (cofmap ba) (cofmap ab)
+
 
 {----------------------------------------------------------
     Type composition
@@ -212,6 +215,32 @@ instance (Applicative g, Applicative f) => Applicative (g :. f) where
 -- instance Monoid (g (f a)) => Monoid ((g :. f) a) where
 --   mempty  = O mempty
 --   mappend = inO2 mappend
+
+-- | Monad distributivity
+class DistribM m n where
+  distribM :: n (m a) -> m (n a)
+
+instance (Monad m, Monad n, DistribM m n) => Monad (m :. n) where
+  return  = O . return . return
+  e >>= f = joinMM (liftM f e)
+
+-- | 'join' for @(m :. n)@
+joinMM :: (Monad m, Monad n, DistribM m n) =>
+          (m :. n) ((m :. n) a) -> (m :. n) a
+joinMM = O . liftM join . join . liftM distribM . unO . liftM unO
+
+-- Derivation:
+-- 
+--       (m :. n) ((m :. n) a)
+--   --> m (n (m (n a)))      -- liftM unO
+--   --> m (n ((m :. n) a))   -- unO
+--   --> m (m (n (n a)))      -- liftM tweep
+--   --> m (n (n a))          -- join
+--   --> m (n a)              -- liftM join
+--   --> (m :. n) a           -- O
+
+-- TODO: what conditions are required so that m:.n satisfies the monad
+-- laws?
 
 
 {----------------------------------------------------------
