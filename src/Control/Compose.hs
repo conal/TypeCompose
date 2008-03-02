@@ -152,7 +152,7 @@ newtype (g :. f) a = O { unO :: g (f a) }
 type O = (:.)
 
 -- Here it is, as promised.
-instance (  Functor g,   Functor f) => Functor (g :. f) where fmap = fmapFF
+instance (Functor g, Functor f) => Functor (g :. f) where fmap = fmapFF
 
 -- | @newtype@ bijection
 biO :: g (f a) :<->: (g :. f) a
@@ -197,8 +197,7 @@ cofmapFC h (O gf) = O (fmap (cofmap h) gf)
 cofmapCF :: (Cofunctor g, Functor f) => (b -> a) -> (g :. f) a -> (g :. f) b
 cofmapCF h (O gf) = O (cofmap (fmap h) gf)
 
-instance ( Functor (g :. f)
-         , Applicative g, Applicative f) => Applicative (g :. f) where
+instance (Applicative g, Applicative f) => Applicative (g :. f) where
   pure  = O . pure . pure
   (<*>) = inO2 (liftA2 (<*>))
 
