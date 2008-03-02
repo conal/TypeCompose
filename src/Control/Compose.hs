@@ -33,7 +33,7 @@ module Control.Compose
   -- * Type composition
   -- ** Unary\/binary
   , OO(..)
-  , DistribM, joinMM
+  , DistribM(..), joinMM
 --   -- * Binary\/unary
 --   , ArrowAp(..),
   -- ** (->)\/unary
@@ -216,7 +216,10 @@ instance (Applicative g, Applicative f) => Applicative (g :. f) where
 --   mempty  = O mempty
 --   mappend = inO2 mappend
 
--- | Monad distributivity
+-- | Monad distributivity.
+-- 
+-- TODO: what conditions are required so that @(m :. n)@ satisfies the monad
+-- laws?
 class DistribM m n where
   distribM :: n (m a) -> m (n a)
 
@@ -238,9 +241,6 @@ joinMM = O . liftM join . join . liftM distribM . unO . liftM unO
 --   --> m (n (n a))          -- join
 --   --> m (n a)              -- liftM join
 --   --> (m :. n) a           -- O
-
--- TODO: what conditions are required so that m:.n satisfies the monad
--- laws?
 
 
 {----------------------------------------------------------
