@@ -26,12 +26,15 @@ module Data.Pair
   , UnpairTy, Unpair(..)
   -- * Dual unpairings
   , Copair(..), copair
+  -- * Misc
+  , pairEdit, pairEditM
   ) where
 
 
 import Data.Monoid
 import Control.Arrow
 import Control.Applicative
+import Control.Monad                    -- for pairEdit
 
 import Control.Compose
 
@@ -59,6 +62,13 @@ type PairTy f = forall a b. f a -> f b -> f (a,b)
 --       pair = arPair
 --   instance (Monoid_f h, Copair h) => Pair h where
 --       pair = copair
+-- @
+-- 
+-- Also, if you have a type constructor that's a 'Functor' and a 'Pair',
+-- here is a way to define '(<*>)' for 'Applicative':
+-- 
+-- @
+--   rf <*> rx = uncurry ($) <$> (rf `pair` rx)
 -- @
 
 class Pair f where
@@ -185,3 +195,26 @@ instance Copair Endo where  -- Parital == Endo
 
 -- Standard instance for (Monoid_f h, Copair h)
 instance Pair Endo where pair = copair
+
+
+
+{----------------------------------------------------------
+    Misc
+----------------------------------------------------------}
+
+-- | Turn a pair of sources into a source of pair-editors.  See
+-- <http://conal.net/blog/posts/pairs-sums-and-reactivity/>.
+-- 'Functor'\/'Monoid' version.  See also 'pairEditM'.
+
+pairEdit :: (Functor m, Monoid (m ((c,d) -> (c,d)))) =>
+            (m c,m d) -> m ((c,d) -> (c,d))
+pairEdit (ce,de) =
+  fmap (first.const) ce `mappend` fmap (second.const) de
+
+
+-- | Turn a pair of sources into a source of pair-editors.  See
+-- <http://conal.net/blog/posts/pairs-sums-and-reactivity/>.
+-- Monad version.  See also 'pairEdit'.
+pairEditM :: MonadPlus m => (m c,m d) -> m ((c,d) -> (c,d))
+pairEditM (ce,de) =
+  liftM (first.const) ce `mplus` liftM (second.const) de

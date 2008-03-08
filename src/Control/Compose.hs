@@ -218,8 +218,7 @@ instance (Applicative g, Applicative f) => Applicative (g :. f) where
 
 -- | Monad distributivity.
 -- 
--- TODO: what conditions are required so that @(m :. n)@ satisfies the monad
--- laws?
+-- TODO: what conditions are required so that @(m :. n)@ satisfies the monad laws?
 class DistribM m n where
   distribM :: n (m a) -> m (n a)
 
@@ -237,7 +236,7 @@ joinMM = O . liftM join . join . liftM distribM . unO . liftM unO
 --       (m :. n) ((m :. n) a)
 --   --> m (n (m (n a)))      -- liftM unO
 --   --> m (n ((m :. n) a))   -- unO
---   --> m (m (n (n a)))      -- liftM tweep
+--   --> m (m (n (n a)))      -- liftM distribM
 --   --> m (n (n a))          -- join
 --   --> m (n a)              -- liftM join
 --   --> (m :. n) a           -- O
