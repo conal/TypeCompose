@@ -1,5 +1,11 @@
 % TypeCompose changes
 
+== Version 0.5 ==
+
+* Backed out DistribM.  Now that I've read "Composing Monads", I know
+  there's more to it.  At least four different ways, all with conflicting
+  Monad instances.
+
 == Version 0.4 ==
 
 * pairEdit, pairEditM in Data.Pair

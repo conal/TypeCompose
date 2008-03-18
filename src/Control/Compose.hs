@@ -30,7 +30,7 @@ module Control.Compose
   -- * Unary\/unary composition
   , (:.)(..), O, biO, convO, coconvO, inO, inO2, inO3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
-  , DistribM(..), joinMM
+  -- , DistribM(..), joinMM
   -- * Type composition
   -- ** Unary\/binary
   , OO(..)
@@ -60,7 +60,7 @@ module Control.Compose
   ) where
 
 import Control.Applicative
-import Control.Monad (liftM,join)
+-- import Control.Monad (liftM,join)
 import Control.Arrow hiding (pure)
 import Data.Monoid
 
@@ -216,6 +216,14 @@ instance (Applicative g, Applicative f) => Applicative (g :. f) where
 --   mempty  = O mempty
 --   mappend = inO2 mappend
 
+
+
+{-
+
+-- A first pass at monad composition.  But now I've read "Composing
+-- Monads", and I know there's more to it.  At least four different ways,
+-- all with conflicting Monad instances.
+
 -- | Monad distributivity.
 -- 
 -- TODO: what conditions are required so that @(m :. n)@ satisfies the monad laws?
@@ -240,6 +248,8 @@ joinMM = O . liftM join . join . liftM distribM . unO . liftM unO
 --   --> m (n (n a))          -- join
 --   --> m (n a)              -- liftM join
 --   --> (m :. n) a           -- O
+
+-}
 
 
 {----------------------------------------------------------
