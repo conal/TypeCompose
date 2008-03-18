@@ -1,5 +1,17 @@
 % TypeCompose changes
 
+== Version 0.4 ==
+
+* pairEdit, pairEditM in Data.Pair
+* build-type simple
+* doc tweek DistribM & joinMM
+* DistribM export & comment tweak
+* DistribM and (m :. n) Monad
+* Functor/Functor & Applicative/Applicative tweak
+* inId2.  Functor & Applicative instances for Id
+* removed r->m dep in RefMonad
+* doc tweak
+
 == Version 0.3 ==
 
 * Simplified Applicative instance for g :. f
