@@ -1,6 +1,7 @@
 {-# LANGUAGE Rank2Types, FlexibleInstances, MultiParamTypeClasses
            , FlexibleContexts, UndecidableInstances, TypeSynonymInstances
            , TypeOperators, GeneralizedNewtypeDeriving, StandaloneDeriving
+           , CPP
   #-}
 -- For ghc 6.6 compatibility
 -- {-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
@@ -61,6 +62,9 @@ module Control.Compose
 
 import Control.Applicative
 -- import Control.Monad (liftM,join)
+#if __GLASGOW_HASKELL__ >= 609
+import qualified Control.Category as Cat
+#endif
 import Control.Arrow hiding (pure)
 import Data.Monoid
 
@@ -260,9 +264,18 @@ joinMM = O . liftM join . join . liftM distribM . unO . liftM unO
 -- "StaticArrow" in [1].
 newtype OO f (~>) a b = OO { unOO :: f (a ~> b) }
 
+
+#if __GLASGOW_HASKELL__ >= 609
+instance (Applicative f, Cat.Category (~>)) => Cat.Category (OO f (~>)) where
+  id          = OO (pure Cat.id)
+  OO g . OO h = OO (liftA2 (Cat..) g h)
+#endif
+
 instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
-  arr           = OO . pure . arr
+#if __GLASGOW_HASKELL__ < 609
   OO g >>> OO h = OO (liftA2 (>>>) g h)
+#endif
+  arr           = OO . pure . arr
   first (OO g)  = OO (liftA first g)
 
 -- For instance, /\ a b. f (a -> m b) =~ OO f Kleisli m
@@ -347,9 +360,19 @@ class FunAble h where
   f ***% g = firstFun f >>> secondFun g
   f &&&% g = arrFun (\b -> (b,b)) >>> f ***% g
 
+
+#if __GLASGOW_HASKELL__ >= 609
+instance FunAble h => Cat.Category (FunA h) where
+  id  = FunA (arrFun id)
+  (.) = inFunA2 (Cat..)
+#endif
+
+
 instance FunAble h => Arrow (FunA h) where
   arr p  = FunA    (arrFun p)
+#if __GLASGOW_HASKELL__ < 609
   (>>>)  = inFunA2 (>>>)
+#endif
   first  = inFunA  firstFun
   second = inFunA  secondFun
   (***)  = inFunA2 (***%)
@@ -595,9 +618,19 @@ inProdd2 :: ((f a b, g a b) -> (f' a' b', g' a' b') -> (f'' a'' b'', g'' a'' b''
          -> ((f ::*:: g) a b -> (f' ::*:: g') a' b' -> (f'' ::*:: g'') a'' b'')
 inProdd2 h (Prodd p) = inProdd (h p)
 
+
+#if __GLASGOW_HASKELL__ >= 609
+instance (Cat.Category f, Cat.Category f') => Cat.Category (f ::*:: f') where
+  id  = Prodd (Cat.id,Cat.id )
+  (.) = inProdd2 ((Cat..)  ***# (Cat..) )
+#endif
+
+
 instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
   arr    = Prodd .  (arr    &&&  arr   )
+#if __GLASGOW_HASKELL__ < 609
   (>>>)  = inProdd2 ((>>>)  ***# (>>>) )
+#endif
   first  = inProdd  (first  ***  first )
   second = inProdd  (second ***  second)
   (***)  = inProdd2 ((***)  ***# (***) )

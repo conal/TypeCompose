@@ -1,5 +1,9 @@
 % TypeCompose changes
 
+== Version 0.5.1 ==
+
+* Tweaked to work with ghc before and after 6.9
+
 == Version 0.5 ==
 
 * Backed out DistribM.  Now that I've read "Composing Monads", I know

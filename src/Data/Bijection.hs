@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeOperators, CPP #-}
 -- For ghc 6.6 compatibility
 -- {-# OPTIONS -fglasgow-exts #-}
 
@@ -25,6 +25,9 @@ module Data.Bijection
   , inBi
   ) where
 
+#if __GLASGOW_HASKELL__ >= 609
+import qualified Control.Category as Cat
+#endif
 import Control.Arrow
 
 
@@ -47,9 +50,17 @@ idb = Bi idA idA where idA = arr id
 inverse :: Bijection (~>) a b -> Bijection (~>) b a
 inverse (Bi ab ba) = Bi ba ab
 
+#if __GLASGOW_HASKELL__ >= 609
+instance Cat.Category (~>) => Cat.Category (Bijection (~>)) where
+  id = Bi Cat.id Cat.id
+  Bi bc cb . Bi ab ba = Bi (bc Cat.. ab) (ba Cat.. cb)
+#endif
+
 instance Arrow (~>) => Arrow (Bijection (~>)) where
-  arr = error "No arr for (:<->:)."
+#if __GLASGOW_HASKELL__ < 609
   Bi ab ba >>> Bi bc cb = Bi (ab >>> bc) (cb >>> ba)
+#endif
+  arr = error "No arr for (:<->:)."
   first  (Bi ab ba) = Bi (first  ab) (first  ba)
   second (Bi ab ba) = Bi (second ab) (second ba)
   Bi ab ba *** Bi cd dc = Bi (ab *** cd) (ba *** dc)
