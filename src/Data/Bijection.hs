@@ -26,7 +26,8 @@ module Data.Bijection
   ) where
 
 #if __GLASGOW_HASKELL__ >= 609
-import qualified Control.Category as Cat
+import Control.Category
+import Prelude hiding ((.), id)
 #endif
 import Control.Arrow
 
@@ -51,9 +52,9 @@ inverse :: Bijection (~>) a b -> Bijection (~>) b a
 inverse (Bi ab ba) = Bi ba ab
 
 #if __GLASGOW_HASKELL__ >= 609
-instance Cat.Category (~>) => Cat.Category (Bijection (~>)) where
-  id = Bi Cat.id Cat.id
-  Bi bc cb . Bi ab ba = Bi (bc Cat.. ab) (ba Cat.. cb)
+instance Category (~>) => Category (Bijection (~>)) where
+  id = Bi id id
+  Bi bc cb . Bi ab ba = Bi (bc . ab) (ba . cb)
 #endif
 
 instance Arrow (~>) => Arrow (Bijection (~>)) where

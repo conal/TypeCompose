@@ -63,7 +63,8 @@ module Control.Compose
 import Control.Applicative
 -- import Control.Monad (liftM,join)
 #if __GLASGOW_HASKELL__ >= 609
-import qualified Control.Category as Cat
+import Control.Category
+import Prelude hiding ((.), id)
 #endif
 import Control.Arrow hiding (pure)
 import Data.Monoid
@@ -266,9 +267,9 @@ newtype OO f (~>) a b = OO { unOO :: f (a ~> b) }
 
 
 #if __GLASGOW_HASKELL__ >= 609
-instance (Applicative f, Cat.Category (~>)) => Cat.Category (OO f (~>)) where
-  id          = OO (pure Cat.id)
-  OO g . OO h = OO (liftA2 (Cat..) g h)
+instance (Applicative f, Category (~>)) => Category (OO f (~>)) where
+  id          = OO (pure id)
+  OO g . OO h = OO (liftA2 (.) g h)
 #endif
 
 instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
@@ -362,9 +363,9 @@ class FunAble h where
 
 
 #if __GLASGOW_HASKELL__ >= 609
-instance FunAble h => Cat.Category (FunA h) where
+instance FunAble h => Category (FunA h) where
   id  = FunA (arrFun id)
-  (.) = inFunA2 (Cat..)
+  (.) = inFunA2 (.)
 #endif
 
 
@@ -620,16 +621,16 @@ inProdd2 h (Prodd p) = inProdd (h p)
 
 
 #if __GLASGOW_HASKELL__ >= 609
-instance (Cat.Category f, Cat.Category f') => Cat.Category (f ::*:: f') where
-  id  = Prodd (Cat.id,Cat.id )
-  (.) = inProdd2 ((Cat..)  ***# (Cat..) )
+instance (Category f, Category f') => Category (f ::*:: f') where
+  id  = Prodd (id,id)
+  (.) = inProdd2 ((.) ***# (.))
 #endif
 
 
 instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
-  arr    = Prodd .  (arr    &&&  arr   )
+  arr    = Prodd . (arr &&&  arr)
 #if __GLASGOW_HASKELL__ < 609
-  (>>>)  = inProdd2 ((>>>)  ***# (>>>) )
+  (>>>)  = inProdd2 ((>>>) ***# (>>>))
 #endif
   first  = inProdd  (first  ***  first )
   second = inProdd  (second ***  second)
