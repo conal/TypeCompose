@@ -66,7 +66,13 @@ import Control.Applicative
 import Control.Category
 import Prelude hiding ((.), id)
 #endif
+
+#if __GLASGOW_HASKELL__ < 610
 import Control.Arrow hiding (pure)
+#else
+import Control.Arrow
+#endif
+
 import Data.Monoid
 
 -- import Test.QuickCheck -- for Endo
