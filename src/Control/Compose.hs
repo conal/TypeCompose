@@ -67,10 +67,9 @@ import Control.Category
 import Prelude hiding ((.), id)
 #endif
 
-#if __GLASGOW_HASKELL__ < 610
-import Control.Arrow hiding (pure)
-#else
 import Control.Arrow
+#if __GLASGOW_HASKELL__ < 610
+                      hiding (pure)
 #endif
 
 import Data.Monoid
