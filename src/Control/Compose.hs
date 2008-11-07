@@ -214,11 +214,20 @@ instance (Applicative g, Applicative f) => Applicative (g :. f) where
   pure  = O . pure . pure
   (<*>) = inO2 (liftA2 (<*>))
 
+-- Possible Alternative instances:
 
--- Possible Monoid instances
+-- instance (Applicative g, Alternative f) => Alternative (g :. f) where
+--   empty = O (pure empty)
+--   (<|>) = inO2 (liftA2 (<|>))
 
--- instance (Monoid change, Applicative m, Monoid o)
---           => Monoid (SourceG change m o) where
+-- instance (Alternative g, Applicative f) => Alternative (g :. f) where
+--   empty = O empty
+--   (<|>) = inO2 (<|>)
+
+
+-- Possible Monoid instances:
+
+-- instance (Applicative g, Applicative f, Monoid a) => Monoid ((g :. f) a) where
 --   mempty  = pure mempty
 --   mappend = liftA2 mappend
 
