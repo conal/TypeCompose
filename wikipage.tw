@@ -1,0 +1,54 @@
+[[Category:Composition]]
+[[Category:Applicative]]
+[[Category:Libraries]]
+[[Category:Packages]]
+
+== Abstract ==
+
+'''TypeCompose''' provides some classes & instances for forms of type composition, as well as some modules that haven't found another home.
+
+Besides this wiki page, here are more ways to find out about TypeCompose:
+* Visit the [http://hackage.haskell.org/cgi-bin/hackage-scripts/package/TypeCompose Hackage page] for library documentation and to download & install.
+* Or install with <tt>cabal install TypeCompose</tt>.
+* Get the code repository: <tt>darcs get http://code.haskell.org/TypeCompose</tt>.
+* See the [[TypeCompose/Versions| version history]].
+
+== Type composition ==
+
+The <hask>Control.Compose</hask> module includes
+* Various type compositions (unary/unary, binary/unary, etc).  Most are from [http://www.soi.city.ac.uk/~ross/papers/Applicative.html Applicative Programming with Effects].  In particular, <hask>g `O` f</hask> composes functors in to functors and applicative functors (AFs) into AFs.  (In contrast, monads do not in general compose.)  Composition makes AF-based programming simple and elegant, partly because we don't need an AF counterpart to monad transformers.
+* Cofunctors (contravariant functors).  Great for "consumer" types, just as functors suit "producer" (container) types.  There are several composition options.
+* Type argument flip.  Handy for cofunctors: use <hask>Flip (->) o</hask>, for <hask>(-> o)</hask>.
+* Constructor in pairs: <hask>(f a, g a)</hask>.
+* Constructor in arrows/functions: <hask>f a ~> g a</hask>.
+
+== Other features ==
+
+=== Composable bijections ===
+
+Given all the type constructors and compositions of them, I found myself writing some pretty awkward code to wrap & unwrap through multiple layers.  Composable bijections help a lot.
+
+The <hask>Data.Bijection</hask> module is inspired by [http://citeseer.ist.psu.edu/alimarine05there.html There and Back Again: Arrows for Invertible Programming], though done here in a less general setting.
+
+=== Pair- & function-like types ===
+
+The <hask>Data.Pair</hask> and <hask>Data.Lambda</hask> patterns emerged while working on [[DeepArrow]] and [[Eros]].  <hask>Data.Pair</hask> generalizes <hask>zip</hask> and <hask>unzip</hask>  from <hask>[]</hask> to other functors.  It also provides variants of type <hask>f a -> f (a,b)</hask> and <hask>f a -> f (a,b)</hask>.  <hask>Data.Lambda</hask> is similar with classes for lambda-like constructions.
+
+For example uses of <hask>Pair</hask> and <hask>Lambda</hask>, see [[TV]] and [[Eros]].
+
+=== References ===
+
+Monads with references.  Direct rip-off from [http://citeseer.ist.psu.edu/473734.html Global Variables in Haskell].
+
+=== Titling ===
+
+For giving titles to things.  I know it sounds kind of random.  More useful than I first thought.  Used in [[Phooey]], [[TV]], and [[Eros]].
+
+=== Partial values ===
+
+A monoid of partial values.  See the [http://conal.net/blog/posts/a-type-for-partial-values/ teaser] and [http://conal.net/blog/posts/implementing-a-type-for-partial-values/ solution] blog
+posts.
+
+=== Context-dependent monoids ===
+
+Bit of an oddball also.  <hask>Data.CxMonoid</hask> defines a sort of meta-monoid, that can be supplied dynamically with choices of <hask>mempty</hask> and <hask>mappend</hask>.  Used in [[Phooey]] (starting with version 1.3) so that layout could be a monoid but still vary in style.
