@@ -32,7 +32,7 @@ The <hask>Data.Bijection</hask> module is inspired by [http://citeseer.ist.psu.e
 
 === Pair- & function-like types ===
 
-The <hask>Data.Pair</hask> and <hask>Data.Lambda</hask> patterns emerged while working on [[DeepArrow]] and [[Eros]].  <hask>Data.Pair</hask> generalizes <hask>zip</hask> and <hask>unzip</hask>  from <hask>[]</hask> to other functors.  It also provides variants of type <hask>f a -> f (a,b)</hask> and <hask>f a -> f (a,b)</hask>.  <hask>Data.Lambda</hask> is similar with classes for lambda-like constructions.
+The <hask>Data.Zip</hask> and <hask>Data.Lambda</hask> patterns emerged while working on [[DeepArrow]] and [[Eros]].  <hask>Data.Zip</hask> generalizes <hask>zip</hask> and <hask>unzip</hask>  from <hask>[]</hask> to other functors.  It also provides variants of type <hask>f a -> f (a,b)</hask> and <hask>f a -> f (a,b)</hask>.  <hask>Data.Lambda</hask> is similar with classes for lambda-like constructions.
 
 For example uses of <hask>Pair</hask> and <hask>Lambda</hask>, see [[TV]] and [[Eros]].
 
