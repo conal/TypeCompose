@@ -1,8 +1,6 @@
 {-# LANGUAGE Rank2Types, TypeOperators, MultiParamTypeClasses
   , FunctionalDependencies, FlexibleInstances, TypeSynonymInstances #-}
--- -- For ghc 6.6 compatibility
--- {-# OPTIONS -fglasgow-exts #-}
-
+{-# OPTIONS_GHC -Wall #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Data.Lambda

@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeSynonymInstances #-}
-
+{-# OPTIONS_GHC -Wall #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Data.Partial
@@ -28,12 +28,13 @@ module Data.Partial
   -- via 'FunAble' instance
   ) where
 
+import Prelude hiding (zip,unzip)
 import Data.Monoid
 import Control.Arrow
 
 import Control.Compose (FunAble(..),inEndo)
 
-import Data.Pair
+import Data.Zip
 
 -- | Partial value.  Represented an endomorphism, which is a 'Monoid'
 -- under 'id' and '(.)'.  Then 'mempty' is the completely undefined value,
@@ -98,15 +99,15 @@ pArr f = inEndo $ (f .) . (. inv f)
 -- @PartialFun a@.
 
 pFirst  :: PartialX a a' -> PartialX (a,b) (a',b)
-pFirst  f = uncurry pair . first f . unpair
+pFirst  f = uncurry zip . first f . unzip
 
 pSecond :: PartialX b b' -> PartialX (a,b) (a,b')
-pSecond g = uncurry pair . second g . unpair
+pSecond g = uncurry zip . second g . unzip
 
 -- The following is not quite equivalent, since mappend doesn't commute.
 -- 
 -- pSecond g ab = pUnSnd (g b) `mappend` pUnFst a
---   where (a,b) = dsPPair ab
+--   where (a,b) = dsPZip ab
 
 
 -- TODO: DeepArrow instance for PartialFun (perhaps in the DeepArrow

@@ -1,8 +1,5 @@
 {-# LANGUAGE TypeOperators, CPP #-}
--- For ghc 6.6 compatibility
--- {-# OPTIONS -fglasgow-exts #-}
-
-
+{-# OPTIONS_GHC -Wall #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Data.Bijection

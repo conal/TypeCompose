@@ -1,7 +1,5 @@
 {-# LANGUAGE FlexibleInstances, OverlappingInstances, TypeOperators, TypeSynonymInstances #-}
--- -- For ghc 6.6 compatibility
--- {-# OPTIONS -fglasgow-exts -fallow-overlapping-instances #-}
-
+{-# OPTIONS_GHC -Wall #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Data.Title

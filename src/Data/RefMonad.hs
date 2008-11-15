@@ -1,7 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
--- -- For ghc 6.6 compatibility
--- {-# OPTIONS -fglasgow-exts #-}
-
+{-# OPTIONS_GHC -Wall #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Data.RefMonad

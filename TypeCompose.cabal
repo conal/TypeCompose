@@ -27,7 +27,7 @@ Exposed-Modules:
                      Data.Bijection
                      Data.CxMonoid
                      Data.RefMonad
-                     Data.Pair
+                     Data.Zip
                      Data.Lambda
                      Data.Title
 		     Data.Partial
