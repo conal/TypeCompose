@@ -165,7 +165,11 @@ newtype (g :. f) a = O { unO :: g (f a) }
 type O = (:.)
 
 -- Here it is, as promised.
+
 instance (Functor g, Functor f) => Functor (g :. f) where fmap = fmapFF
+
+-- instance (Functor g, Functor f) => Functor (g :. f) where
+--   fmap = inO.fmap.fmap
 
 -- | @newtype@ bijection
 biO :: g (f a) :<->: (g :. f) a
@@ -184,27 +188,36 @@ coconvO biG biF = biG >>> bicomap biF >>> Bi O unO
 inO :: (g (f a) -> g' (f' a')) -> ((g :. f) a -> (g' :. f') a')
 inO = (O .).(. unO)
 
+-- inO h (O gfa) = O (h gfa)
+-- inO h = O . h . unO
+
 -- | Apply a binary function within the 'O' constructor.
 inO2 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a''))
      -> ((g :. f) a -> (g' :. f') a' -> (g'' :. f'') a'')
-inO2 h (O gfa) = inO (h gfa)
+inO2 = (inO .).(.unO)
+
+-- inO2 h (O gfa) (O gfa') = O (h gfa gfa')
+-- inO2 h (O gfa) = inO (h gfa)
 
 -- | Apply a ternary function within the 'O' constructor.
 inO3 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a'')   -> g''' (f''' a'''))
      -> ((g :. f) a -> (g' :. f') a' -> (g'' :. f'') a'' -> (g''' :. f''') a''')
-inO3 h (O gfa) = inO2 (h gfa)
+inO3 = (inO2 .).(.unO)
+-- inO3 h (O gfa) = inO2 (h gfa)
 
 -- | Used for the @Functor :. Functor@ instance of 'Functor'
 fmapFF :: (  Functor g,   Functor f) => (a -> b) -> (g :. f) a -> (g :. f) b
-fmapFF h = inO $ fmap (fmap h)
+fmapFF = inO.fmap.fmap
 
 -- | Used for the @Cofunctor :. Cofunctor@ instance of 'Functor'
 fmapCC :: (Cofunctor g, Cofunctor f) => (a -> b) -> (g :. f) a -> (g :. f) b
-fmapCC h = inO $ cofmap (cofmap h)
+fmapCC = inO.cofmap.cofmap
 
 -- | Used for the @Functor :. Cofunctor@ instance of 'Functor'
 cofmapFC :: (Functor g, Cofunctor f) => (b -> a) -> (g :. f) a -> (g :. f) b
-cofmapFC h (O gf) = O (fmap (cofmap h) gf)
+cofmapFC = inO.fmap.cofmap
+
+-- cofmapFC h (O gf) = O (fmap (cofmap h) gf)
 
 -- | Used for the @Cofunctor :. Functor@ instance of 'Functor'
 cofmapCF :: (Cofunctor g, Functor f) => (b -> a) -> (g :. f) a -> (g :. f) b
@@ -212,7 +225,7 @@ cofmapCF h (O gf) = O (cofmap (fmap h) gf)
 
 instance (Applicative g, Applicative f) => Applicative (g :. f) where
   pure  = O . pure . pure
-  (<*>) = inO2 (liftA2 (<*>))
+  (<*>) = (inO2.liftA2) (<*>)
 
 -- Possible Alternative instances:
 
