@@ -30,6 +30,7 @@ module Control.Compose
   , Cofunctor(..), bicomap
   -- * Unary\/unary composition
   , (:.)(..), O, biO, convO, coconvO, inO, inO2, inO3
+  , oPure, oFmap, oLiftA2, oLiftA3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
   -- , DistribM(..), joinMM
   -- * Type composition
@@ -204,6 +205,34 @@ inO3 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a'')   -> g''' (f''' a'''))
      -> ((g :. f) a -> (g' :. f') a' -> (g'' :. f'') a'' -> (g''' :. f''') a''')
 inO3 = (inO2 .).(.unO)
 -- inO3 h (O gfa) = inO2 (h gfa)
+
+
+-- | Handy combination of 'O' and 'pure'.
+oPure   :: (Applicative g) => f a -> (g :. f) a
+
+-- | Handy combination of 'inO' and 'fmap'.
+oFmap   :: (Functor g') =>
+           (f a -> f' a') -> (g' :. f) a -> (g' :. f') a'
+
+-- | Handy combination of 'inO2' and 'liftA2'.
+oLiftA2 :: (Applicative g'') =>
+           (f a -> f' a' -> f'' a'')
+        -> (g'' :. f) a -> (g'' :. f') a' -> (g'' :. f'') a''
+
+-- | Handy combination of 'inO3' and 'liftA3'.
+oLiftA3 :: (Applicative g''') =>
+           (f a -> f' a' -> f'' a'' -> f''' a''')
+        -> (g''' :. f) a
+        -> (g''' :. f') a'
+        -> (g''' :. f'') a''
+        -> (g''' :. f''') a'''
+
+oPure   = O    . pure
+oFmap   = inO  . fmap
+oLiftA2 = inO2 . liftA2
+oLiftA3 = inO3 . liftA3
+
+
 
 -- | Used for the @Functor :. Functor@ instance of 'Functor'
 fmapFF :: (  Functor g,   Functor f) => (a -> b) -> (g :. f) a -> (g :. f) b
