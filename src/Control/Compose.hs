@@ -122,36 +122,28 @@ Composition of unary type constructors
 There are (at least) two useful 'Monoid' instances, so you'll have to
 pick one and type-specialize it (filling in all or parts of @g@ and\/or @f@).
 
-@
-    -- standard Monoid instance for Applicative applied to Monoid
-    instance (Applicative (g :. f), Monoid a) => Monoid ((g :. f) a) where
-      { mempty = pure mempty; mappend = liftA2 mappend }
-    -- Especially handy when g is a Monoid_f.
-    instance Monoid (g (f a)) => Monoid ((g :. f) a) where
-      { mempty = O mempty; mappend = inO2 mappend }
-@
+>     -- standard Monoid instance for Applicative applied to Monoid
+>     instance (Applicative (g :. f), Monoid a) => Monoid ((g :. f) a) where
+>       { mempty = pure mempty; mappend = liftA2 mappend }
+>     -- Especially handy when g is a Monoid_f.
+>     instance Monoid (g (f a)) => Monoid ((g :. f) a) where
+>       { mempty = O mempty; mappend = inO2 mappend }
 
 Corresponding to the first and second definitions above,
 
-@
-    instance (Applicative g, Monoid_f f) => Monoid_f (g :. f) where
-      { mempty_f = O (pure mempty_f); mappend_f = inO2 (liftA2 mappend_f) }
-    instance Monoid_f g => Monoid_f (g :. f) where
-      { mempty_f = O mempty_f; mappend_f = inO2 mappend_f }
-@
+>     instance (Applicative g, Monoid_f f) => Monoid_f (g :. f) where
+>       { mempty_f = O (pure mempty_f); mappend_f = inO2 (liftA2 mappend_f) }
+>     instance Monoid_f g => Monoid_f (g :. f) where
+>       { mempty_f = O mempty_f; mappend_f = inO2 mappend_f }
 
 Similarly, there are two useful 'Functor' instances and two useful
 'Cofunctor' instances.
 
-@
-    instance (  Functor g,   Functor f) => Functor (g :. f) where fmap = fmapFF
-    instance (Cofunctor g, Cofunctor f) => Functor (g :. f) where fmap = fmapCC
-@
-
-@
-    instance (Functor g, Cofunctor f) => Cofunctor (g :. f) where cofmap = cofmapFC
-    instance (Cofunctor g, Functor f) => Cofunctor (g :. f) where cofmap = cofmapCF
-@
+>     instance (  Functor g,   Functor f) => Functor (g :. f) where fmap = fmapFF
+>     instance (Cofunctor g, Cofunctor f) => Functor (g :. f) where fmap = fmapCC
+> 
+>     instance (Functor g, Cofunctor f) => Cofunctor (g :. f) where cofmap = cofmapFC
+>     instance (Cofunctor g, Functor f) => Cofunctor (g :. f) where cofmap = cofmapCF
 
 However, it's such a bother to define the Functor instances per
 composition type, I've left the fmapFF case in.  If you want the fmapCC
@@ -356,9 +348,7 @@ instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
 -- See also "Arrows and Computation", which notes that the following type
 -- is "almost an arrow" (<http://www.soi.city.ac.uk/~ross/papers/fop.html>).
 -- 
--- @
---   newtype ListMap i o = LM ([i] -> [o])
--- @
+-- >   newtype ListMap i o = LM ([i] -> [o])
 --
 -- http://www.cse.unsw.edu.au/~dons/haskell-1990-2006/msg16550.html
 
@@ -447,9 +437,7 @@ instance FunAble h => Arrow (FunA h) where
 -- (<http://flint.cs.yale.edu/trifonov/papers/sqcc.pdf>)
 --  Instantiate this schema wherever necessary:
 --
--- @
---   instance Monoid_f f where { mempty_f = mempty ; mappend_f = mappend }
--- @
+-- >    instance Monoid_f f where { mempty_f = mempty ; mappend_f = mappend }
 class Monoid_f m where
   mempty_f  :: forall a. m a
   mappend_f :: forall a. m a -> m a -> m a
@@ -513,11 +501,9 @@ instance ToOI OI where toOI = id
 -- other instances, like @[a]@.  Here's a template for @App@-free
 -- instances.
 -- 
--- @
---   instance (Applicative f, Monoid a) => Monoid (f a) where
---     mempty  = pure mempty
---     mappend = liftA2 mappend
--- @
+-- >    instance (Applicative f, Monoid a) => Monoid (f a) where
+-- >      mempty  = pure mempty
+-- >      mappend = liftA2 mappend
 newtype f :$ a = App { unApp :: f a }
 
 -- | Compatibility synonym for (:$).
