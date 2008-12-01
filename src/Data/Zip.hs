@@ -1,5 +1,5 @@
 {-# LANGUAGE Rank2Types, TypeOperators, UndecidableInstances #-}
-{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Data.Zip
@@ -20,14 +20,14 @@
 -- you'll have to
 --
 -- @
---    import Prelude hiding (zip,unzip)
+--    import Prelude hiding (zip,zipWith,zipWith3,unzip)
 -- @
 ----------------------------------------------------------------------
 
 module Data.Zip
   (
   -- * Zippings
-    ZipTy, Zip(..)
+    ZipTy, Zip(..), zipWith, zipWith3
   , apZip, ppZip, arZip
   -- * Unzipings
   , UnzipTy, Unzip(..)
@@ -38,8 +38,8 @@ module Data.Zip
   ) where
 
 
-import Prelude hiding (zip,unzip)
-import qualified Prelude as P
+import Prelude hiding (zip,zipWith,zipWith3,unzip)
+import qualified Prelude
 
 import Data.Monoid
 import Control.Arrow
@@ -61,31 +61,50 @@ type ZipTy f = forall a b. f a -> f b -> f (a,b)
 -- defined in the general forms below, because they would lead to a lot of
 -- overlap.
 -- 
--- @
---   instance Applicative f => Zip f where
---       zip = liftA2 (,)
---   instance (Applicative h, Zip f) => Zip (h :. f) where
---       zip = apZip
---   instance (Functor g, Zip g, Zip f) => Zip (g :. f)
---       where zip = ppZip
---   instance (Arrow (~>), Unzip f, Zip g) => Zip (Arrw (~>) f g) where
---       zip = arZip
---   instance (Monoid_f h, Cozip h) => Zip h where
---       zip = cozip
--- @
+-- >    instance Applicative f => Zip f where
+-- >        zip = liftA2 (,)
+-- >    instance (Applicative h, Zip f) => Zip (h :. f) where
+-- >        zip = apZip
+-- >    instance (Functor g, Zip g, Zip f) => Zip (g :. f)
+-- >        where zip = ppZip
+-- >    instance (Arrow (~>), Unzip f, Zip g) => Zip (Arrw (~>) f g) where
+-- >        zip = arZip
+-- >    instance (Monoid_f h, Cozip h) => Zip h where
+-- >        zip = cozip
 -- 
 -- Also, if you have a type constructor that's a 'Functor' and a 'Zip',
 -- here is a way to define '(<*>)' for 'Applicative':
 -- 
--- @
---   rf <*> rx = uncurry ($) <$> (rf `zip` rx)
--- @
+-- >    (<*>) = zipWith ($)
+-- 
+-- Minimum definitions for instances.
 
 class Zip f where
-  zip :: ZipTy f         -- ^ Generalized 'P.zip'
+  zip :: ZipTy f                   -- ^ Generalized 'Prelude.zip'
+
+-- Oh yeah!  I don't want Zip to assume Functor.  See
+-- <http://conal.net/blog/posts/more-beautiful-fold-zipping/>.
+
+-- | Generalized 'Prelude.zipWith'
+zipWith  :: (Functor f, Zip f) =>
+            (a -> b -> c)
+         -> (f a -> f b -> f c)
+zipWith h = (fmap.fmap.fmap) (uncurry h) zip
+
+-- | Generalized 'Prelude.zipWith'
+zipWith3 :: (Functor f, Zip f) =>
+            (a -> b -> c -> d)
+         -> (f a -> f b -> f c -> f d)
+zipWith3 h as bs cs = zipWith (uncurry h) (as `zip` bs) cs
+
+
+{-# RULES
+"zipWith  prelude" zipWith  = Prelude.zipWith
+"zipWith3 prelude" zipWith3 = Prelude.zipWith3
+  #-}
 
 -- Standard instances (Applicative f)
-instance             Zip []       where zip = P.zip
+instance             Zip []       where zip = Prelude.zip
 instance Monoid u => Zip ((,)  u) where zip = liftA2 (,)
 instance             Zip ((->) u) where zip = liftA2 (,)
 instance             Zip IO       where zip = liftA2 (,)
@@ -127,16 +146,15 @@ instance (Zip f, Zip g) => Zip (f :*: g) where
     Unzipings
 ----------------------------------------------------------}
 
--- | Type of 'unzip' method.  Generalizes 'P.unzip'.
+-- | Type of 'unzip' method.  Generalizes 'Prelude.unzip'.
 type UnzipTy f = forall a b. f (a,b) -> (f a, f b)
 
 -- | Unzippable.  Minimal instance definition: either (a) 'unzip' /or/ (b)
 -- both of 'fsts' /and/ 'snds'.  A standard template to substitute any
 -- 'Functor' @f.@ But watch out for effects!
 -- 
--- @
---   instance Functor f => Unzip f where {fsts = fmap fst; snds = fmap snd}
--- @
+-- >     instance Functor f => Unzip f where {fsts = fmap fst; snds = fmap snd}
+
 class Unzip f where
   unzip :: UnzipTy f                    -- ^ generalized unzip
   fsts   :: f (a,b) -> f a              -- ^ First part of pair-like value
@@ -147,7 +165,7 @@ class Unzip f where
   snds   = snd.unzip
 
 instance Unzip [] where
-  unzip = P.unzip       -- single pass. don't use default
+  unzip = Prelude.unzip       -- single pass. don't use default
   fsts  = fmap fst
   snds  = fmap snd 
 
@@ -166,10 +184,10 @@ instance Unzip Id        where { fsts = fmap fst; snds = fmap snd }
 -- Especially handy for contravariant functors ('Cofunctor') .  Use this
 -- template (filling in @f@) :
 -- 
--- @
---   instance Cofunctor f => Cozip f where
---     { cofsts = cofmap fst ; cosnds = cofmap snd }
--- @
+-- 
+-- >    instance Cofunctor f => Cozip f where
+-- >      { cofsts = cofmap fst ; cosnds = cofmap snd }
+
 class Cozip f where
   cofsts :: f a -> f (a,b)               -- ^ Zip-like value from first part
   cosnds :: f b -> f (a,b)               -- ^ Zip-like value from second part
