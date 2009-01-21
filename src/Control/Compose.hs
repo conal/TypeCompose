@@ -164,14 +164,13 @@ type O = (:.)
 
 instance (Functor g, Functor f) => Functor (g :. f) where fmap = fmapFF
 
--- These next two instances are from Creighton Hogg: 
+-- These next two instances are based on suggestions from Creighton Hogg: 
 
-instance (Foldable g, Foldable f, Functor g) => Foldable (g :. f)
-  where foldMap f (O fg) = fold . fmap (foldMap f) $ fg
+instance (Foldable g, Foldable f, Functor g) => Foldable (g :. f) where
+  foldMap f = fold . fmap (foldMap f) . unO
 
-instance (Traversable g, Traversable f) => Traversable (g :. f)
-    where sequenceA (O fg) = 
-              O <$> (sequenceA . fmap sequenceA $ fg)
+instance (Traversable g, Traversable f) => Traversable (g :. f) where
+  sequenceA = fmap O . sequenceA . fmap sequenceA . unO
 
 
 
