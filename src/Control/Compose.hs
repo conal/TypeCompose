@@ -68,6 +68,9 @@ import Control.Category
 import Prelude hiding ((.), id)
 #endif
 
+import Data.Foldable
+import Data.Traversable
+
 import Control.Arrow
 #if __GLASGOW_HASKELL__ < 610
                       hiding (pure)
@@ -160,6 +163,17 @@ type O = (:.)
 -- Here it is, as promised.
 
 instance (Functor g, Functor f) => Functor (g :. f) where fmap = fmapFF
+
+-- These next two instances are from Creighton Hogg: 
+
+instance (Foldable g, Foldable f, Functor g) => Foldable (g :. f)
+  where foldMap f (O fg) = fold . fmap (foldMap f) $ fg
+
+instance (Traversable g, Traversable f) => Traversable (g :. f)
+    where sequenceA (O fg) = 
+              O <$> (sequenceA . fmap sequenceA $ fg)
+
+
 
 -- instance (Functor g, Functor f) => Functor (g :. f) where
 --   fmap = inO.fmap.fmap
