@@ -2,6 +2,7 @@
 [[Category:Applicative]]
 [[Category:Libraries]]
 [[Category:Packages]]
+[[Category:Type-level programming]]
 
 == Abstract ==
 
@@ -10,8 +11,8 @@
 Besides this wiki page, here are more ways to find out about TypeCompose:
 * Visit the [http://hackage.haskell.org/cgi-bin/hackage-scripts/package/TypeCompose Hackage page] for library documentation and to download & install.
 * Or install with <tt>cabal install TypeCompose</tt>.
-* Get the code repository: <tt>darcs get http://code.haskell.org/TypeCompose</tt>.
-* See the [[TypeCompose/Versions| version history]].
+* Get the code repository: <tt>darcs get http://darcs.haskell.org/packages/TypeCompose</tt>.
+<!--* See the [[TypeCompose/Versions| version history]].-->
 
 == Type composition ==
 

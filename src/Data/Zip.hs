@@ -1,5 +1,11 @@
-{-# LANGUAGE Rank2Types, TypeOperators, UndecidableInstances #-}
-{-# OPTIONS_GHC -Wall -fenable-rewrite-rules #-}
+{-# LANGUAGE Rank2Types, TypeOperators, UndecidableInstances, CPP #-}
+{-# OPTIONS_GHC -Wall #-}
+#if __GLASGOW_HASKELL__ < 610
+{-# OPTIONS_GHC -frewrite-rules #-}
+#else
+{-# OPTIONS_GHC -fenable-rewrite-rules #-}
+#endif
+
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Data.Zip
