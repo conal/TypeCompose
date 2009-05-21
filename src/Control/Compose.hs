@@ -61,15 +61,10 @@ module Control.Compose
   , biEndo, inEndo
   ) where
 
-import Control.Applicative
--- import Control.Monad (liftM,join)
 #if __GLASGOW_HASKELL__ >= 609
 import Control.Category
 import Prelude hiding ((.), id)
 #endif
-
-import Data.Foldable
-import Data.Traversable
 
 import Control.Arrow
 #if __GLASGOW_HASKELL__ < 610
@@ -77,6 +72,9 @@ import Control.Arrow
 #endif
 
 import Data.Monoid
+import Data.Foldable
+import Data.Traversable
+import Control.Applicative
 
 -- import Test.QuickCheck -- for Endo
 
