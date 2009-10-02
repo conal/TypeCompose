@@ -1,5 +1,5 @@
 Name:                TypeCompose
-Version:             0.6.5
+Version:             0.6.6
 Synopsis: 	     Type composition classes & instances
 Category:            Composition, Control
 Description:
@@ -19,7 +19,7 @@ Stability:           provisional
 build-type:	     Simple
 Hs-Source-Dirs:      src
 Extensions:          
-Build-Depends:       base
+Build-Depends:       base<5
 Exposed-Modules:     
                      Data.Bijection
                      Data.CxMonoid
