@@ -28,6 +28,9 @@
 -- @
 --    import Prelude hiding (zip,zipWith,zipWith3,unzip)
 -- @
+-- 
+-- Temporarily, there is also Data.Pair, which contains the same
+-- functionality with different naming.  I'm unsure which I prefer.
 ----------------------------------------------------------------------
 
 module Data.Zip
