@@ -1,3 +1,1 @@
-# For special configuration, especially for docs.  Otherwise see README.
-
-include ../my-cabal-make.inc
+include ../cho-home-cabal-make.inc
