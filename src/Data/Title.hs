@@ -64,3 +64,5 @@ instance Title o => Title_f (Flip (->) o) where
 -- Equivalently,
 -- 
 --   title_f str (Flip snk) = Flip (title str snk)
+
+-- TODO: Generalize the Title_f instance to other arrows.

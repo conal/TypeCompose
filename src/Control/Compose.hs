@@ -25,7 +25,11 @@
 ----------------------------------------------------------------------
 
 module Control.Compose
-  ( Unop, Binop
+  ( 
+  -- * Value transformers
+    Unop, Binop
+  -- * Specialized semantic editor combinators
+  , result, argument, (~>)
   -- * Contravariant functors
   , Cofunctor(..), bicomap
   -- * Unary\/unary composition
@@ -88,14 +92,44 @@ infixr 0 :$
 infixl 0 $*
 infixr 3 ***#
 
+
 {----------------------------------------------------------
-    Misc
+    Value transformers
 ----------------------------------------------------------}
 
 -- |Unary functions
 type Unop  a = a -> a
 -- |Binary functions
 type Binop a = a -> a -> a
+
+
+{--------------------------------------------------------------------
+    Semantic editor combinators, specialized to functions.
+    See http://conal.net/blog/posts/semantic-editor-combinators/.
+    Also the DeepArrow package.
+--------------------------------------------------------------------}
+
+-- | Add pre-processing
+argument :: (a' -> a) -> ((a -> b) -> (a' -> b))
+argument = flip (.)
+
+-- | Add post-processing
+result :: (b -> b') -> ((a -> b) -> (a -> b'))
+result = (.)
+
+infixr 1 ~>
+-- | Add pre- and post processing
+(~>) :: (a' -> a) -> (b -> b') -> ((a -> b) -> (a' -> b'))
+-- (f ~> h) g = h . g . f
+f ~> h = result h . argument f
+
+-- More generally,
+-- 
+-- (~>) :: Category (-->) => (a' --> a) -> (b --> b') -> ((a --> b) -> (a' --> b'))
+
+-- If I add argument back to DeepArrow, we can get a different generalization:
+-- 
+-- (~>) :: DeepArrow (-->) => (a' --> a) -> (b --> b') -> ((a -> b) --> (a' -> b'))
 
 
 {----------------------------------------------------------
@@ -190,7 +224,9 @@ coconvO biG biF = biG >>> bicomap biF >>> Bi O unO
 
 -- | Apply a unary function within the 'O' constructor.
 inO :: (g (f a) -> g' (f' a')) -> ((g :. f) a -> (g' :. f') a')
-inO = (O .).(. unO)
+inO = unO ~> O
+
+-- inO = (O .).(. unO)
 
 -- inO h (O gfa) = O (h gfa)
 -- inO h = O . h . unO
@@ -198,7 +234,9 @@ inO = (O .).(. unO)
 -- | Apply a binary function within the 'O' constructor.
 inO2 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a''))
      -> ((g :. f) a -> (g' :. f') a' -> (g'' :. f'') a'')
-inO2 = (inO .).(.unO)
+inO2 = unO ~> inO
+
+-- inO2 = (inO .).(.unO)
 
 -- inO2 h (O gfa) (O gfa') = O (h gfa gfa')
 -- inO2 h (O gfa) = inO (h gfa)
@@ -206,7 +244,9 @@ inO2 = (inO .).(.unO)
 -- | Apply a ternary function within the 'O' constructor.
 inO3 :: (g (f a)   -> g' (f' a')   -> g'' (f'' a'')   -> g''' (f''' a'''))
      -> ((g :. f) a -> (g' :. f') a' -> (g'' :. f'') a'' -> (g''' :. f''') a''')
-inO3 = (inO2 .).(.unO)
+inO3 = unO ~> inO2
+
+-- inO3 = (inO2 .).(.unO)
 -- inO3 h (O gfa) = inO2 (h gfa)
 
 
@@ -399,7 +439,9 @@ newtype FunA h a b = FunA { unFunA :: h a -> h b }
 -- | Apply unary function in side a 'FunA' representation.
 inFunA :: ((h a -> h b) -> (h' a' -> h' b'))
        -> (FunA h a b -> FunA h' a' b')
-inFunA = (FunA .).(. unFunA)
+inFunA = unFunA ~> FunA
+
+-- inFunA = (FunA .).(. unFunA)
 
 -- | Apply binary function in side a 'FunA' representation.
 inFunA2 :: ((h a -> h b) -> (h' a' -> h' b') -> (h'' a'' -> h'' b''))
@@ -471,7 +513,9 @@ biFlip = Bi Flip unFlip
 
 -- Apply unary function inside of a 'Flip' representation.
 inFlip :: ((a~>b) -> (a' ~~> b')) -> (Flip (~>) b a -> Flip (~~>) b' a')
-inFlip = (Flip .).(. unFlip)
+inFlip = unFlip ~> Flip
+
+-- inFlip = (Flip .).(. unFlip)
 
 -- Apply binary function inside of a 'Flip' representation.
 inFlip2 :: ((a~>b) -> (a' ~~> b') -> (a'' ~~~> b''))
@@ -529,7 +573,9 @@ biApp = Bi App unApp
 
 -- Apply unary function inside of an 'App representation.
 inApp :: (f a -> f' a') -> (App f a -> App f' a')
-inApp = (App .).(. unApp)
+inApp = unApp ~> App
+
+-- inApp = (App .).(. unApp)
 
 -- Apply binary function inside of a 'App' representation.
 inApp2 :: (f a -> f' a' -> f'' a'') -> (App f a -> App f' a' -> App f'' a'')
@@ -553,7 +599,9 @@ instance (Applicative f, Monoid m) => Monoid (App f m) where
 newtype Id a = Id { unId :: a }
 
 inId :: (a -> b) -> (Id a -> Id b)
-inId = (Id .).(. unId)
+inId = unId ~> Id
+
+-- inId = (Id .).(. unId)
 
 inId2 :: (a -> b -> c) -> (Id a -> Id b -> Id c)
 inId2 f (Id a) = inId (f a)
@@ -601,7 +649,9 @@ instance (Ord (f a, g a)) => Ord ((f :*: g) a) where
 -- | Apply unary function inside of @f :*: g@ representation.
 inProd :: ((f a, g a) -> (f' a', g' a'))
        -> ((f :*: g) a -> (f' :*: g') a')
-inProd = (Prod .).(. unProd)
+inProd = unProd ~> Prod
+
+-- inProd = (Prod .).(. unProd)
 
 -- | Apply binary function inside of @f :*: g@ representation.
 inProd2 :: ((f a, g a) -> (f' a', g' a') -> (f'' a'', g'' a''))
@@ -665,7 +715,9 @@ newtype (f ::*:: g) a b = Prodd { unProdd :: (f a b, g a b) }
 -- | Apply binary function inside of @f :*: g@ representation.
 inProdd :: ((f a b, g a b) -> (f' a' b', g' a' b'))
         -> ((f ::*:: g) a b -> (f' ::*:: g') a' b')
-inProdd = (Prodd  .).(. unProdd)
+inProdd = unProdd ~> Prodd
+
+-- inProdd = (Prodd  .).(. unProdd)
 
 -- | Apply binary function inside of @f :*: g@ representation.
 inProdd2 :: ((f a b, g a b) -> (f' a' b', g' a' b') -> (f'' a'' b'', g'' a'' b''))
@@ -714,7 +766,9 @@ deriving instance Monoid (f a ~> g a) => Monoid (Arrw (~>) f g a)
 -- | Apply unary function inside of @Arrw@ representation.
 inArrw :: ((f a ~> g a) -> (f' a' ~> g' a'))
        -> ((Arrw (~>) f g) a -> (Arrw (~>) f' g') a')
-inArrw = (Arrw .).(. unArrw)
+inArrw = unArrw ~> Arrw
+
+-- inArrw = (Arrw .).(. unArrw)
 
 -- | Apply binary function inside of @Arrw (~>) f g@ representation.
 inArrw2 :: ((f a ~> g a) -> (f' a' ~> g' a') -> (f'' a'' ~> g'' a''))
@@ -766,8 +820,10 @@ convFun bfa cga = (bfa ---> cga) >>> biFun
 biConst :: a :<->: Const a b
 biConst = Bi Const getConst
 
-inConst :: (a -> b) -> Const a u -> Const b v
-inConst = (Const .).(. getConst)
+inConst :: (a -> b) -> (Const a u -> Const b v)
+inConst = getConst ~> Const
+
+-- inConst = (Const .).(. getConst)
 
 inConst2 :: (a -> b -> c) -> Const a u -> Const b v -> Const c w
 inConst2 f (Const a) = inConst (f a)
