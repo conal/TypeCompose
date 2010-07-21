@@ -33,7 +33,7 @@ module Control.Compose
   -- * Contravariant functors
   , Cofunctor(..), bicomap
   -- * Unary\/unary composition
-  , (:.)(..), O, biO, convO, coconvO, inO, inO2, inO3
+  , (:.)(..), O, unO, biO, convO, coconvO, inO, inO2, inO3
   , oPure, oFmap, oLiftA2, oLiftA3
   , fmapFF, fmapCC, cofmapFC, cofmapCF
   -- , DistribM(..), joinMM
@@ -51,7 +51,7 @@ module Control.Compose
   -- * Type application
   , (:$)(..), App, biApp, inApp, inApp2
   -- * Identity
-  , Id(..), biId, inId, inId2
+  , Id(..),unId, biId, inId, inId2
   -- * Constructor pairing
   -- ** Unary
   , (:*:)(..), biProd, convProd, (***#), ($*), inProd, inProd2, inProd3
@@ -187,7 +187,13 @@ someday Haskell will do Prolog-style search for instances, subgoaling the
 constraints, rather than just matching instance heads.
 
 -}
-newtype (g :. f) a = O { unO :: g (f a) }
+newtype (g :. f) a = O (g (f a)) deriving Show
+
+-- newtype (g :. f) a = O { unO :: g (f a) } deriving Show
+
+-- | Unwrap a '(:.)'.
+unO :: (g :. f) a -> g (f a)
+unO (O gfa) = gfa
 
 -- | Compatibility synonym
 type O = (:.)
@@ -195,6 +201,10 @@ type O = (:.)
 -- Here it is, as promised.
 
 instance (Functor g, Functor f) => Functor (g :. f) where fmap = fmapFF
+
+-- or
+-- 
+--   deriving instance (Functor g, Functor f) => Functor (g :. f)
 
 -- These next two instances are based on suggestions from Creighton Hogg: 
 
@@ -577,7 +587,17 @@ instance (Applicative f, Monoid m) => Monoid (App f m) where
 -- | Identity type constructor.  Until there's a better place to find it.
 -- I'd use "Control.Monad.Identity", but I don't want to introduce a
 -- dependency on mtl just for Id.
-newtype Id a = Id { unId :: a }
+newtype Id a = Id a deriving Show
+
+-- Could define record field:
+-- 
+--   newtype Id a = Id { unId :: a } deriving Show
+-- 
+-- but then Show is uglier.
+
+-- Extract value from an 'Id'
+unId :: Id a -> a
+unId (Id a) = a
 
 inId :: (a -> b) -> (Id a -> Id b)
 inId = unId ~> Id
