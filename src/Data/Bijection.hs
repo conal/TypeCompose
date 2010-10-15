@@ -79,6 +79,11 @@ bimap (Bi ab ba) = Bi (fmap ab) (fmap ba)
        -> (a ~> c) :<->: (b ~> d)
 Bi ab ba ---> Bi cd dc = Bi (\ ac -> ba>>>ac>>>cd) (\ bd -> ab>>>bd>>>dc)
 
+-- TODO: Rewrite (--->) via (~>).  Currently would cause a module cycle
+-- 
+-- Bi ab ba ---> Bi cd dc = Bi (ac ~> cd) (ab ~> dc)
+
+
 -- | Apply a function in an alternative (monomorphic) representation.
 inBi :: Arrow (~>) => Bijection (~>) a b -> (a ~> a) -> (b ~> b)
 inBi (Bi to from) aa = from >>> aa >>> to

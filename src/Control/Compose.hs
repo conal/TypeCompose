@@ -6,7 +6,7 @@
 -- For ghc 6.6 compatibility
 -- {-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
 
 ----------------------------------------------------------------------
 -- |
@@ -119,13 +119,10 @@ result = (.)
 
 infixr 1 ~>
 -- | Add pre- and post processing
-(~>) :: (a' -> a) -> (b -> b') -> ((a -> b) -> (a' -> b'))
--- (f ~> h) g = h . g . f
-f ~> h = result h . argument f
-
--- More generally,
--- 
--- (~>) :: Category (-->) => (a' --> a) -> (b --> b') -> ((a --> b) -> (a' --> b'))
+(~>) :: Category (-->) =>
+        (a' --> a) -> (b --> b') -> ((a --> b) -> (a' --> b'))
+(f ~> h) g = h . g . f
+-- f ~> h = result h . argument f
 
 -- If I add argument back to DeepArrow, we can get a different generalization:
 -- 
