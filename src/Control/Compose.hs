@@ -29,7 +29,7 @@ module Control.Compose
   -- * Value transformers
     Unop, Binop
   -- * Specialized semantic editor combinators
-  , result, argument, (~>)
+  , result, argument, (~>), (~>*)
   -- * Contravariant functors
   , Cofunctor(..), bicomap
   -- * Unary\/unary composition
@@ -117,7 +117,8 @@ argument = flip (.)
 result :: (b -> b') -> ((a -> b) -> (a -> b'))
 result = (.)
 
-infixr 1 ~>
+infixr 1 ~>, ~>*
+
 -- | Add pre- and post processing
 (~>) :: Category (-->) =>
         (a' --> a) -> (b --> b') -> ((a --> b) -> (a' --> b'))
@@ -127,6 +128,10 @@ infixr 1 ~>
 -- If I add argument back to DeepArrow, we can get a different generalization:
 -- 
 -- (~>) :: DeepArrow (-->) => (a' --> a) -> (b --> b') -> ((a -> b) --> (a' -> b'))
+
+-- | Like '(~>)' but specialized to functors
+(~>*) :: Functor f => (a -> b) -> (c -> d) -> (f b -> f c) -> (f a -> f d)
+f ~>* g = fmap f ~> fmap g
 
 
 {----------------------------------------------------------
