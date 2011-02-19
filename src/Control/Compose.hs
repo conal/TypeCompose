@@ -130,7 +130,7 @@ infixr 1 ~>, ~>*
 -- (~>) :: DeepArrow (-->) => (a' --> a) -> (b --> b') -> ((a -> b) --> (a' -> b'))
 
 -- | Like '(~>)' but specialized to functors
-(~>*) :: Functor f => (a -> b) -> (c -> d) -> (f b -> f c) -> (f a -> f d)
+(~>*) :: Functor f => (a' -> a) -> (b -> b') -> (f a -> f b) -> (f a' -> f b')
 f ~>* g = fmap f ~> fmap g
 
 
