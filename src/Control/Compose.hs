@@ -583,7 +583,7 @@ instance (Applicative f, Monoid m) => Monoid (App f m) where
 
 
 {----------------------------------------------------------
-    Identity -- TODO: eliminate in favor of Data.Traversable.Id
+    Identity
 ----------------------------------------------------------}
 
 -- | Identity type constructor.  Until there's a better place to find it.
@@ -617,6 +617,16 @@ instance Functor Id where
 instance Applicative Id where
   pure  = Id
   (<*>) = inId2 ($)
+
+instance Foldable Id where
+  foldMap f (Id a) = f a
+
+instance Traversable Id where
+  sequenceA (Id fa) = fmap Id fa
+
+-- Id fa :: Id (f a)
+-- fa :: f a
+-- fmap Id fa = f (Id a)
 
 {----------------------------------------------------------
     Unary constructor pairing
