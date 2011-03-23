@@ -219,9 +219,20 @@ instance (Foldable g, Foldable f, Functor g) => Foldable (g :. f) where
   -- I could let fold default
 
 instance (Traversable g, Traversable f) => Traversable (g :. f) where
-  sequenceA = fmap O . sequenceA . fmap sequenceA . unO
+  -- sequenceA = fmap O . sequenceA . fmap sequenceA . unO
+  -- sequenceA = fmap O . traverse sequenceA . unO
+  -- sequenceA = (unO ~> fmap O) (traverse sequenceA)
+  -- traverse f = fmap O . traverse (traverse f) . unO
+  traverse = (unO ~> fmap O) . traverse . traverse
 
-
+-- sequenceA . fmap f
+-- sequenceA . (inO.fmap.fmap) f
+-- sequenceA . inO (fmap (fmap f))
+-- sequenceA . O . fmap (fmap f) . unO
+-- fmap O . traverse sequenceA . unO . O . fmap (fmap f) . unO 
+-- fmap O . traverse sequenceA . fmap (fmap f) . unO 
+-- fmap O . traverse (sequenceA .  fmap f) . unO 
+-- fmap O . traverse (traverse f) . unO 
 
 -- instance (Functor g, Functor f) => Functor (g :. f) where
 --   fmap = inO.fmap.fmap
