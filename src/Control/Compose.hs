@@ -211,7 +211,12 @@ instance (Functor g, Functor f) => Functor (g :. f) where fmap = fmapFF
 -- These next two instances are based on suggestions from Creighton Hogg: 
 
 instance (Foldable g, Foldable f, Functor g) => Foldable (g :. f) where
-  foldMap f = fold . fmap (foldMap f) . unO
+  -- foldMap f = fold . fmap (foldMap f) . unO
+  foldMap f = foldMap (foldMap f) . unO
+  -- fold (O gfa) = fold (fold <$> gfa)
+  -- fold = fold . fmap fold . unO
+  fold = foldMap fold . unO
+  -- I could let fold default
 
 instance (Traversable g, Traversable f) => Traversable (g :. f) where
   sequenceA = fmap O . sequenceA . fmap sequenceA . unO
