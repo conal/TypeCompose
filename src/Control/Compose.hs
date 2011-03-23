@@ -641,6 +641,8 @@ instance Monad Id where
 
 instance Foldable Id where
   foldMap f (Id a) = f a
+  -- foldMap f = f . unId
+  -- foldMap = (. unId)
 
 instance Traversable Id where
   sequenceA (Id fa) = fmap Id fa
