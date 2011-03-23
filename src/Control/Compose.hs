@@ -225,6 +225,7 @@ instance (Traversable g, Traversable f) => Traversable (g :. f) where
   -- traverse f = fmap O . traverse (traverse f) . unO
   traverse = (unO ~> fmap O) . traverse . traverse
 
+-- traverse f
 -- sequenceA . fmap f
 -- sequenceA . (inO.fmap.fmap) f
 -- sequenceA . inO (fmap (fmap f))
@@ -633,6 +634,10 @@ instance Functor Id where
 instance Applicative Id where
   pure  = Id
   (<*>) = inId2 ($)
+
+instance Monad Id where
+  return = pure
+  Id x >>= f = f x
 
 instance Foldable Id where
   foldMap f (Id a) = f a
