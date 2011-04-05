@@ -216,10 +216,15 @@ instance (Foldable g, Foldable f, Functor g) => Foldable (g :. f) where
   -- fold (O gfa) = fold (fold <$> gfa)
   -- fold = fold . fmap fold . unO
   fold = foldMap fold . unO
-  -- If (f m) is a monoid whenever m is, we could use the following
-  -- instance instead:
-  -- fold = fold . fold . unO
   -- I could let fold default
+
+-- If (f m) is a monoid whenever m is, we could use the following
+-- fold definition instead:
+-- 
+--   fold = fold . fold . unO
+-- 
+-- I don't think we can express that constraint on f via GHC's type
+-- system, though we could in a more Lambda-Prolog-style extension.
 
 instance (Traversable g, Traversable f) => Traversable (g :. f) where
   -- sequenceA = fmap O . sequenceA . fmap sequenceA . unO
