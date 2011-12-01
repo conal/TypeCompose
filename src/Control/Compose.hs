@@ -31,11 +31,11 @@ module Control.Compose
   -- * Specialized semantic editor combinators
   , result, argument, (~>), (~>*)
   -- * Contravariant functors
-  , Cofunctor(..), bicomap
+  , ContraFunctor(..), bicomap
   -- * Unary\/unary composition
   , (:.)(..), O, unO, biO, convO, coconvO, inO, inO2, inO3
   , oPure, oFmap, oLiftA2, oLiftA3
-  , fmapFF, fmapCC, cofmapFC, cofmapCF
+  , fmapFF, fmapCC, contraFmapFC, contraFmapCF
   -- , DistribM(..), joinMM
   -- * Type composition
   -- ** Unary\/binary
@@ -140,12 +140,12 @@ f ~>* g = fmap f ~> fmap g
 
 -- | Contravariant functors.  often useful for /acceptors/ (consumers,
 -- sinks) of values.
-class Cofunctor acc where
-  cofmap :: (a -> b) -> (acc b -> acc a)
+class ContraFunctor h where
+  contraFmap :: (a -> b) -> (h b -> h a)
 
 -- | Bijections on contravariant functors
-bicomap :: Cofunctor f => (a :<->: b) -> (f a :<->: f b)
-bicomap (Bi ab ba) = Bi (cofmap ba) (cofmap ab)
+bicomap :: ContraFunctor f => (a :<->: b) -> (f a :<->: f b)
+bicomap (Bi ab ba) = Bi (contraFmap ba) (contraFmap ab)
 
 
 {----------------------------------------------------------
@@ -174,13 +174,13 @@ Corresponding to the first and second definitions above,
 >       { mempty_f = O mempty_f; mappend_f = inO2 mappend_f }
 
 Similarly, there are two useful 'Functor' instances and two useful
-'Cofunctor' instances.
+'ContraFunctor' instances.
 
->     instance (  Functor g,   Functor f) => Functor (g :. f) where fmap = fmapFF
->     instance (Cofunctor g, Cofunctor f) => Functor (g :. f) where fmap = fmapCC
+>     instance (      Functor g,       Functor f) => Functor (g :. f) where fmap = fmapFF
+>     instance (ContraFunctor g, ContraFunctor f) => Functor (g :. f) where fmap = fmapCC
 > 
->     instance (Functor g, Cofunctor f) => Cofunctor (g :. f) where cofmap = cofmapFC
->     instance (Cofunctor g, Functor f) => Cofunctor (g :. f) where cofmap = cofmapCF
+>     instance (      Functor g, ContraFunctor f) => ContraFunctor (g :. f) where contraFmap = contraFmapFC
+>     instance (ContraFunctor g,       Functor f) => ContraFunctor (g :. f) where contraFmap = contraFmapCF
 
 However, it's such a bother to define the Functor instances per
 composition type, I've left the fmapFF case in.  If you want the fmapCC
@@ -246,8 +246,8 @@ biO = Bi O unO
 convO :: Functor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g :. f) a)
 convO biG biF = biG >>> bimap biF >>> Bi O unO
 
--- | Compose a bijection, Cofunctor style
-coconvO :: Cofunctor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g :. f) a)
+-- | Compose a bijection, ContraFunctor style
+coconvO :: ContraFunctor g => (b :<->: g c) -> (c :<->: f a) -> (b :<->: (g :. f) a)
 coconvO biG biF = biG >>> bicomap biF >>> Bi O unO
 
 
@@ -297,19 +297,19 @@ oLiftA3 = inO3 . liftA3
 fmapFF :: (  Functor g,   Functor f) => (a -> b) -> (g :. f) a -> (g :. f) b
 fmapFF = inO.fmap.fmap
 
--- | Used for the @Cofunctor :. Cofunctor@ instance of 'Functor'
-fmapCC :: (Cofunctor g, Cofunctor f) => (a -> b) -> (g :. f) a -> (g :. f) b
-fmapCC = inO.cofmap.cofmap
+-- | Used for the @ContraFunctor :. ContraFunctor@ instance of 'Functor'
+fmapCC :: (ContraFunctor g, ContraFunctor f) => (a -> b) -> (g :. f) a -> (g :. f) b
+fmapCC = inO.contraFmap.contraFmap
 
--- | Used for the @Functor :. Cofunctor@ instance of 'Functor'
-cofmapFC :: (Functor g, Cofunctor f) => (b -> a) -> (g :. f) a -> (g :. f) b
-cofmapFC = inO.fmap.cofmap
+-- | Used for the @Functor :. ContraFunctor@ instance of 'Functor'
+contraFmapFC :: (Functor g, ContraFunctor f) => (b -> a) -> (g :. f) a -> (g :. f) b
+contraFmapFC = inO.fmap.contraFmap
 
--- cofmapFC h (O gf) = O (fmap (cofmap h) gf)
+-- contraFmapFC h (O gf) = O (fmap (contraFmap h) gf)
 
--- | Used for the @Cofunctor :. Functor@ instance of 'Functor'
-cofmapCF :: (Cofunctor g, Functor f) => (b -> a) -> (g :. f) a -> (g :. f) b
-cofmapCF h (O gf) = O (cofmap (fmap h) gf)
+-- | Used for the @ContraFunctor :. Functor@ instance of 'Functor'
+contraFmapCF :: (ContraFunctor g, Functor f) => (b -> a) -> (g :. f) a -> (g :. f) b
+contraFmapCF h (O gf) = O (contraFmap (fmap h) gf)
 
 instance (Applicative g, Applicative f) => Applicative (g :. f) where
   pure  = O . pure . pure
@@ -539,8 +539,8 @@ inFlip3 :: ((a~>b) -> (a' ~~> b') -> (a'' ~~~> b'') -> (a''' ~~~~> b'''))
         -> (Flip (~>) b a -> Flip (~~>) b' a' -> Flip (~~~>) b'' a'' -> Flip (~~~~>) b''' a''')
 inFlip3 f (Flip ar) = inFlip2 (f ar)
 
-instance Arrow (~>) => Cofunctor (Flip (~>) b) where
-  cofmap h (Flip f) = Flip (arr h >>> f)
+instance Arrow (~>) => ContraFunctor (Flip (~>) b) where
+  contraFmap h (Flip f) = Flip (arr h >>> f)
 
 -- Useful for (~>) = (->).  Maybe others.
 instance (Applicative ((~>) a), Monoid o) => Monoid (Flip (~>) o a) where
@@ -551,7 +551,7 @@ instance (Applicative ((~>) a), Monoid o) => Monoid (Flip (~>) o a) where
 instance Monoid o => Monoid_f (Flip (->) o) where
   { mempty_f = mempty ; mappend_f = mappend }
 
--- | (-> IO ()) as a 'Flip'.  A Cofunctor.
+-- | (-> IO ()) as a 'Flip'.  A ContraFunctor.
 type OI = Flip (->) (IO ())
 
 -- | Convert to an 'OI'.
@@ -808,18 +808,18 @@ inArrw3 :: ((f a ~> g a) -> (f' a' ~> g' a') -> (f'' a'' ~> g'' a'') -> (f''' a'
         -> ((Arrw (~>) f g) a -> (Arrw (~>) f' g') a' -> (Arrw (~>) f'' g'') a'' -> (Arrw (~>) f''' g''') a''')
 inArrw3 h (Arrw p) = inArrw2 (h p)
 
--- Functor & Cofunctor instances.  Beware use of 'arr', which is not
+-- Functor & ContraFunctor instances.  Beware use of 'arr', which is not
 -- available for some of my favorite arrows.
 
-instance (Arrow (~>), Cofunctor f, Functor g) => Functor (Arrw (~>) f g) where
-  fmap h = inArrw $ \ fga -> arr (cofmap h) >>> fga >>> arr (fmap h)
+instance (Arrow (~>), ContraFunctor f, Functor g) => Functor (Arrw (~>) f g) where
+  fmap h = inArrw $ \ fga -> arr (contraFmap h) >>> fga >>> arr (fmap h)
 
-instance (Arrow (~>), Functor f, Cofunctor g) => Cofunctor (Arrw (~>) f g) where
-  cofmap h = inArrw $ \ fga -> arr (fmap h) >>> fga >>> arr (cofmap h)
+instance (Arrow (~>), Functor f, ContraFunctor g) => ContraFunctor (Arrw (~>) f g) where
+  contraFmap h = inArrw $ \ fga -> arr (fmap h) >>> fga >>> arr (contraFmap h)
 
 -- Restated,
 -- 
---   cofmap h = inArrw $ (arr (fmap h) >>>) . (>>> arr (cofmap h))
+--   contraFmap h = inArrw $ (arr (fmap h) >>>) . (>>> arr (contraFmap h))
 
 -- 'Arrw' specialized to functions.  
 type (:->:) = Arrw (->)

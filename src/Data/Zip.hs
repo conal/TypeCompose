@@ -207,7 +207,7 @@ instance Cozip (Const e) where
 
 -- Standard instance for contravariant functors
 instance Arrow (~>) => Cozip (Flip (~>) o) where
-  { cofsts = cofmap fst ; cosnds = cofmap snd }
+  { cofsts = contraFmap fst ; cosnds = contraFmap snd }
 
 instance (Functor h, Cozip f) => Cozip (h :. f) where
   cofsts = inO (fmap cofsts)

@@ -1,5 +1,5 @@
 Name:                TypeCompose
-Version:             0.8.3
+Version:             0.9.0
 Synopsis: 	     Type composition classes & instances
 Category:            Composition, Control
 Description:
@@ -8,7 +8,7 @@ Description:
   .
   Please see the project wiki page: <http://haskell.org/haskellwiki/TypeCompose>
   .
-  &#169; 2007-2010 by Conal Elliott; BSD3 license.
+  &#169; 2007-2011 by Conal Elliott; BSD3 license.
 Author:              Conal Elliott 
 Maintainer:          conal@conal.net
 Homepage:            http://haskell.org/haskellwiki/TypeCompose

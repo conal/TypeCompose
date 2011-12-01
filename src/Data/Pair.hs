@@ -159,11 +159,11 @@ instance Unpair Id        where { fsts = fmap fst; snds = fmap snd }
 ----------------------------------------------------------}
 
 -- | Dual to 'Unpair'.
--- Especially handy for contravariant functors ('Cofunctor') .  Use this
+-- Especially handy for contravariant functors ('ContraFunctor') .  Use this
 -- template (filling in @f@) :
 -- 
 -- 
--- >    instance Cofunctor f => Copair f where
+-- >    instance ContraFunctor f => Copair f where
 -- >      { cofsts = cofmap fst ; cosnds = cofmap snd }
 
 class Copair f where
@@ -176,7 +176,7 @@ instance Copair (Const e) where
 
 -- Standard instance for contravariant functors
 instance Arrow (~>) => Copair (Flip (~>) o) where
-  { cofsts = cofmap fst ; cosnds = cofmap snd }
+  { cofsts = contraFmap fst ; cosnds = contraFmap snd }
 
 instance (Functor h, Copair f) => Copair (h :. f) where
   cofsts = inO (fmap cofsts)
