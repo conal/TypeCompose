@@ -13,8 +13,8 @@
 -- A monoid 'Partial' of partial values.  See the [Teaser] and [Solution] blog
 -- posts.
 -- 
---   [Teaser]:   <http://conal-elliott.blogspot.com/2007/07/type-for-partial-values.html>
---   [Solution]: <http://conal-elliott.blogspot.com/2007/07/implementing-type-for-partial-values.html>
+--   [Teaser]:   <http://conal.net/blog/posts/a-type-for-partial-values>
+--   [Solution]: <http://conal.net/blog/posts/implementing-a-type-for-partial-values>
 -- 
 -- Also defines a 'FunAble' instance, so that @FunA Partial@ is an arrow.
 ----------------------------------------------------------------------
