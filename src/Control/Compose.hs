@@ -11,7 +11,7 @@
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Control.Compose
--- Copyright   :  (c) Conal Elliott 2007
+-- Copyright   :  (c) Conal Elliott 2007-2012
 -- License     :  BSD3
 -- 
 -- Maintainer  :  conal@conal.net
@@ -37,6 +37,7 @@ module Control.Compose
   , oPure, oFmap, oLiftA2, oLiftA3
   , fmapFF, fmapCC, contraFmapFC, contraFmapCF
   -- , DistribM(..), joinMM
+  , joinMMT, joinComposeT
   -- * Type composition
   -- ** Unary\/binary
   , OO(..)
@@ -79,6 +80,7 @@ import Data.Monoid
 import Data.Foldable
 import Data.Traversable
 import Control.Applicative
+import Control.Monad (join)
 
 -- import Test.QuickCheck -- for Endo
 
@@ -97,9 +99,9 @@ infixr 3 ***#
     Value transformers
 ----------------------------------------------------------}
 
--- |Unary functions
+-- | Unary functions
 type Unop  a = a -> a
--- |Binary functions
+-- | Binary functions
 type Binop a = a -> a -> a
 
 
@@ -110,11 +112,12 @@ type Binop a = a -> a -> a
 --------------------------------------------------------------------}
 
 -- | Add pre-processing
-argument :: (a' -> a) -> ((a -> b) -> (a' -> b))
+-- argument :: (a' -> a) -> ((a -> b) -> (a' -> b))
+argument :: Category (-->) => (a' --> a) -> ((a --> b) -> (a' --> b))
 argument = flip (.)
 
 -- | Add post-processing
-result :: (b -> b') -> ((a -> b) -> (a -> b'))
+result :: Category (-->) => (b --> b') -> ((a --> b) -> (a --> b'))
 result = (.)
 
 infixr 1 ~>, ~>*
@@ -122,17 +125,20 @@ infixr 1 ~>, ~>*
 -- | Add pre- and post processing
 (~>) :: Category (-->) =>
         (a' --> a) -> (b --> b') -> ((a --> b) -> (a' --> b'))
-(f ~> h) g = h . g . f
--- f ~> h = result h . argument f
+-- (f ~> h) g = h . g . f
+f ~> h = result h . argument f
 
 -- If I add argument back to DeepArrow, we can get a different generalization:
 -- 
 -- (~>) :: DeepArrow (-->) => (a' --> a) -> (b --> b') -> ((a -> b) --> (a' -> b'))
 
--- | Like '(~>)' but specialized to functors
-(~>*) :: Functor f => (a' -> a) -> (b -> b') -> (f a -> f b) -> (f a' -> f b')
+-- | Like '(~>)' but specialized to functors and functions.
+(~>*) :: (Functor p, Functor q) => 
+         (a' -> a) -> (b -> b') -> (p a -> q b) -> (p a' -> q b')
 f ~>* g = fmap f ~> fmap g
 
+-- (~>*) could be generalized to other categories (beside functions) if we use a
+-- more general Functor, as in the "categories" package.
 
 {----------------------------------------------------------
     Contravariant functors
@@ -189,7 +195,7 @@ someday Haskell will do Prolog-style search for instances, subgoaling the
 constraints, rather than just matching instance heads.
 
 -}
-newtype (g :. f) a = O (g (f a)) deriving Show
+newtype (g :. f) a = O (g (f a)) deriving (Eq,Show)
 
 -- newtype (g :. f) a = O { unO :: g (f a) } deriving Show
 
@@ -292,7 +298,6 @@ oLiftA2 = inO2 . liftA2
 oLiftA3 = inO3 . liftA3
 
 
-
 -- | Used for the @Functor :. Functor@ instance of 'Functor'
 fmapFF :: (  Functor g,   Functor f) => (a -> b) -> (g :. f) a -> (g :. f) b
 fmapFF = inO.fmap.fmap
@@ -309,7 +314,9 @@ contraFmapFC = inO.fmap.contraFmap
 
 -- | Used for the @ContraFunctor :. Functor@ instance of 'Functor'
 contraFmapCF :: (ContraFunctor g, Functor f) => (b -> a) -> (g :. f) a -> (g :. f) b
-contraFmapCF h (O gf) = O (contraFmap (fmap h) gf)
+contraFmapCF = inO.contraFmap.fmap
+
+-- contraFmapCF h (O gf) = O (contraFmap (fmap h) gf)
 
 instance (Applicative g, Applicative f) => Applicative (g :. f) where
   pure  = O . pure . pure
@@ -370,6 +377,16 @@ joinMM = O . liftM join . join . liftM distribM . unO . liftM unO
 --   --> (m :. n) a           -- O
 
 -}
+
+-- | 'join'-like function for implicitly composed monads
+joinMMT :: (Monad m, Monad n, Traversable n, Applicative m) =>
+           m (n (m (n a))) -> m (n a)
+joinMMT = fmap join . join . fmap sequenceA
+
+-- | 'join'-like function for explicitly composed monads
+joinComposeT :: (Monad m, Monad n, Traversable n, Applicative m) =>
+                (m :. n) ((m :. n) a) -> (m :. n) a
+joinComposeT = O . joinMMT . unO . fmap unO
 
 
 {----------------------------------------------------------
