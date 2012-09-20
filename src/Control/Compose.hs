@@ -29,7 +29,7 @@ module Control.Compose
   -- * Value transformers
     Unop, Binop
   -- * Specialized semantic editor combinators
-  , result, argument, (~>), (~>*)
+  , result, argument, (~>), (~>*), (<~), (*<~)
   -- * Contravariant functors
   , ContraFunctor(..), bicomap
   -- * Unary\/unary composition
@@ -121,12 +121,17 @@ result :: Category (-->) => (b --> b') -> ((a --> b) -> (a --> b'))
 result = (.)
 
 infixr 1 ~>, ~>*
+infixl 1 <~, *<~
 
 -- | Add pre- and post processing
 (~>) :: Category (-->) =>
         (a' --> a) -> (b --> b') -> ((a --> b) -> (a' --> b'))
 -- (f ~> h) g = h . g . f
 f ~> h = result h . argument f
+
+(<~) :: Category (-->) =>
+        (b --> b') -> (a' --> a) -> ((a --> b) -> (a' --> b'))
+(<~) = flip (~>)
 
 -- If I add argument back to DeepArrow, we can get a different generalization:
 -- 
@@ -137,8 +142,12 @@ f ~> h = result h . argument f
          (a' -> a) -> (b -> b') -> (p a -> q b) -> (p a' -> q b')
 f ~>* g = fmap f ~> fmap g
 
--- (~>*) could be generalized to other categories (beside functions) if we use a
--- more general Functor, as in the "categories" package.
+(*<~) :: (Functor p, Functor q) => 
+         (b -> b') -> (a' -> a) -> (p a -> q b) -> (p a' -> q b')
+(*<~) = flip (~>*)
+
+-- (~>*) and (*<~) could be generalized to other categories (beside functions)
+-- if we use a more general Functor, as in the "categories" package.
 
 {----------------------------------------------------------
     Contravariant functors
