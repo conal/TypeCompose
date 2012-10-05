@@ -55,9 +55,9 @@ module Control.Compose
   , Id(..),unId, biId, inId, inId2
   -- * Constructor pairing
   -- ** Unary
-  , (:*:)(..), biProd, convProd, (***#), ($*), inProd, inProd2, inProd3
+  , (:*:)(..),(*:*), biProd, convProd, (***#), ($*), inProd, inProd2, inProd3
   -- * Binary
-  , (::*::)(..), inProdd, inProdd2
+  , (::*::)(..), (*::*), inProdd, inProdd2
   -- * Arrow between /two/ constructor applications
   , Arrw(..), (:->:)
   , biFun, convFun, inArrw, inArrw2, inArrw3
@@ -685,6 +685,10 @@ instance Traversable Id where
 newtype (f :*: g) a = Prod { unProd :: (f a, g a) }
   -- deriving (Show, Eq, Ord)
 
+-- | Handy infix & curried 'Prod'
+(*:*) :: f a -> g a -> (f :*: g) a
+(*:*) = curry Prod
+
 -- | @newtype@ bijection
 biProd :: (f a, g a) :<->: (f :*: g) a
 biProd = Bi Prod unProd
@@ -758,6 +762,10 @@ instance (Applicative f, Applicative g) => Applicative (f :*: g) where
 -- | Pairing of binary type constructors
 newtype (f ::*:: g) a b = Prodd { unProdd :: (f a b, g a b) }
   deriving (Show, Eq, Ord)
+
+-- | Handy infix & curried 'Prodd'
+(*::*) :: f a b -> g a b -> (f ::*:: g) a b
+(*::*) = curry Prodd
 
 -- -- Remove the next three when GHC can derive them (6.8).
 
