@@ -113,29 +113,29 @@ type Binop a = a -> a -> a
 
 -- | Add pre-processing
 -- argument :: (a' -> a) -> ((a -> b) -> (a' -> b))
-argument :: Category (-->) => (a' --> a) -> ((a --> b) -> (a' --> b))
+argument :: Category cat => (a' `cat` a) -> ((a `cat` b) -> (a' `cat` b))
 argument = flip (.)
 
 -- | Add post-processing
-result :: Category (-->) => (b --> b') -> ((a --> b) -> (a --> b'))
+result :: Category cat => (b `cat` b') -> ((a `cat` b) -> (a `cat` b'))
 result = (.)
 
 infixr 1 ~>, ~>*
 infixl 1 <~, *<~
 
 -- | Add pre- and post processing
-(~>) :: Category (-->) =>
-        (a' --> a) -> (b --> b') -> ((a --> b) -> (a' --> b'))
+(~>) :: Category cat =>
+        (a' `cat` a) -> (b `cat` b') -> ((a `cat` b) -> (a' `cat` b'))
 -- (f ~> h) g = h . g . f
 f ~> h = result h . argument f
 
-(<~) :: Category (-->) =>
-        (b --> b') -> (a' --> a) -> ((a --> b) -> (a' --> b'))
+(<~) :: Category cat =>
+        (b `cat` b') -> (a' `cat` a) -> ((a `cat` b) -> (a' `cat` b'))
 (<~) = flip (~>)
 
 -- If I add argument back to DeepArrow, we can get a different generalization:
 -- 
--- (~>) :: DeepArrow (-->) => (a' --> a) -> (b --> b') -> ((a -> b) --> (a' -> b'))
+-- (~>) :: DeepArrow cat => (a' `cat` a) -> (b `cat` b') -> ((a -> b) `cat` (a' -> b'))
 
 -- | Like '(~>)' but specialized to functors and functions.
 (~>*) :: (Functor p, Functor q) => 
@@ -404,16 +404,16 @@ joinComposeT = O . joinMMT . unO . fmap unO
 
 -- | Composition of type constructors: unary with binary.  Called
 -- "StaticArrow" in [1].
-newtype OO f (~>) a b = OO { unOO :: f (a ~> b) }
+newtype OO f j a b = OO { unOO :: f (a `j` b) }
 
 
 #if __GLASGOW_HASKELL__ >= 609
-instance (Applicative f, Category (~>)) => Category (OO f (~>)) where
+instance (Applicative f, Category cat) => Category (OO f cat) where
   id          = OO (pure id)
   OO g . OO h = OO (liftA2 (.) g h)
 #endif
 
-instance (Applicative f, Arrow (~>)) => Arrow (OO f (~>)) where
+instance (Applicative f, Arrow arr) => Arrow (OO f arr) where
 #if __GLASGOW_HASKELL__ < 609
   OO g >>> OO h = OO (liftA2 (>>>) g h)
 #endif
@@ -545,31 +545,31 @@ instance Monoid_f [] where { mempty_f = mempty ; mappend_f = mappend }
 ----------------------------------------------------------}
 
 -- | Flip type arguments
-newtype Flip (~>) b a = Flip { unFlip :: a ~> b }
+newtype Flip j b a = Flip { unFlip :: a `j` b }
 
 -- | @newtype@ bijection
-biFlip :: (a ~> b) :<->: Flip (~>) b a
+biFlip :: (a `j` b) :<->: Flip j b a
 biFlip = Bi Flip unFlip
 
 -- Apply unary function inside of a 'Flip' representation.
-inFlip :: ((a~>b) -> (a' ~~> b')) -> (Flip (~>) b a -> Flip (~~>) b' a')
+inFlip :: ((a `j` b) -> (a' `k` b')) -> (Flip j b a -> Flip k b' a')
 inFlip = unFlip ~> Flip
 
 -- Apply binary function inside of a 'Flip' representation.
-inFlip2 :: ((a~>b) -> (a' ~~> b') -> (a'' ~~~> b''))
-        -> (Flip (~>) b a -> Flip (~~>) b' a' -> Flip (~~~>) b'' a'')
+inFlip2 :: ((a `j` b) -> (a' `k` b') -> (a'' `l` b''))
+        -> (Flip j b a -> Flip k b' a' -> Flip l b'' a'')
 inFlip2 f (Flip ar) = inFlip (f ar)
 
 -- Apply ternary function inside of a 'Flip' representation.
-inFlip3 :: ((a~>b) -> (a' ~~> b') -> (a'' ~~~> b'') -> (a''' ~~~~> b'''))
-        -> (Flip (~>) b a -> Flip (~~>) b' a' -> Flip (~~~>) b'' a'' -> Flip (~~~~>) b''' a''')
+inFlip3 :: ((a `j` b) -> (a' `k` b') -> (a'' `l` b'') -> (a''' `m` b'''))
+        -> (Flip j b a -> Flip k b' a' -> Flip l b'' a'' -> Flip m b''' a''')
 inFlip3 f (Flip ar) = inFlip2 (f ar)
 
-instance Arrow (~>) => ContraFunctor (Flip (~>) b) where
+instance Arrow arr => ContraFunctor (Flip arr b) where
   contraFmap h (Flip f) = Flip (arr h >>> f)
 
 -- Useful for (~>) = (->).  Maybe others.
-instance (Applicative ((~>) a), Monoid o) => Monoid (Flip (~>) o a) where
+instance (Applicative (j a), Monoid o) => Monoid (Flip j o a) where
   mempty  = Flip (pure mempty)
   mappend = inFlip2 (liftA2 mappend)
 
@@ -813,42 +813,44 @@ instance (Arrow f, Arrow f') => Arrow (f ::*:: f') where
 
 -- | Arrow-like type between type constructors (doesn't enforce @Arrow
 -- (~>)@ here).
-newtype Arrw (~>) f g a = Arrw { unArrw :: f a ~> g a } -- deriving Monoid
+newtype Arrw j f g a = Arrw { unArrw :: f a `j` g a } -- deriving Monoid
 
 -- For ghc-6.6, use the "deriving" above, but for 6.8 use the "deriving" below.
 
-deriving instance Monoid (f a ~> g a) => Monoid (Arrw (~>) f g a)
+deriving instance Monoid (f a `j` g a) => Monoid (Arrw j f g a)
 
 -- Replace with generalized bijection?
 
--- toArrw :: Arrow (~>) => (f a ~> b) -> (c ~> g a) -> ((b ~> c) -> Arrw (~>) f g a)
+-- toArrw :: Arrow j => (f a ~> b) -> (c ~> g a) -> ((b ~> c) -> Arrw j f g a)
 -- toArrw fromF toG h = Arrw (fromF >>> h >>> toG)
 
--- fromArrw :: Arrow (~>) => (b ~> f a) -> (g a ~> c) -> (Arrw (~>) f g a -> (b ~> c))
+-- fromArrw :: Arrow j => (b ~> f a) -> (g a ~> c) -> (Arrw j f g a -> (b ~> c))
 -- fromArrw toF fromG (Arrw h') = toF >>> h' >>> fromG
 
 -- | Apply unary function inside of @Arrw@ representation.
-inArrw :: ((f a ~> g a) -> (f' a' ~> g' a'))
-       -> ((Arrw (~>) f g) a -> (Arrw (~>) f' g') a')
+inArrw :: ((f a `j` g a) -> (f' a' `j` g' a'))
+       -> ((Arrw j f g) a -> (Arrw j f' g') a')
 inArrw = unArrw ~> Arrw
 
--- | Apply binary function inside of @Arrw (~>) f g@ representation.
-inArrw2 :: ((f a ~> g a) -> (f' a' ~> g' a') -> (f'' a'' ~> g'' a''))
-        -> (Arrw (~>) f g a -> Arrw (~>) f' g' a' -> Arrw (~>) f'' g'' a'')
+-- | Apply binary function inside of @Arrw j f g@ representation.
+inArrw2 :: ((f a `j` g a) -> (f' a' `j` g' a') -> (f'' a'' `j` g'' a''))
+        -> (Arrw j f g a -> Arrw j f' g' a' -> Arrw j f'' g'' a'')
 inArrw2 h (Arrw p) = inArrw (h p)
 
--- | Apply ternary function inside of @Arrw (~>) f g@ representation.
-inArrw3 :: ((f a ~> g a) -> (f' a' ~> g' a') -> (f'' a'' ~> g'' a'') -> (f''' a''' ~> g''' a'''))
-        -> ((Arrw (~>) f g) a -> (Arrw (~>) f' g') a' -> (Arrw (~>) f'' g'') a'' -> (Arrw (~>) f''' g''') a''')
+-- | Apply ternary function inside of @Arrw j f g@ representation.
+inArrw3 ::
+  ((f a `j` g a) -> (f' a' `j` g' a') ->
+   (f'' a'' `j` g'' a'') -> (f''' a''' `j` g''' a'''))
+  -> ((Arrw j f g) a -> (Arrw j f' g') a' -> (Arrw j f'' g'') a'' -> (Arrw j f''' g''') a''')
 inArrw3 h (Arrw p) = inArrw2 (h p)
 
 -- Functor & ContraFunctor instances.  Beware use of 'arr', which is not
 -- available for some of my favorite arrows.
 
-instance (Arrow (~>), ContraFunctor f, Functor g) => Functor (Arrw (~>) f g) where
+instance (Arrow j, ContraFunctor f, Functor g) => Functor (Arrw j f g) where
   fmap h = inArrw $ \ fga -> arr (contraFmap h) >>> fga >>> arr (fmap h)
 
-instance (Arrow (~>), Functor f, ContraFunctor g) => ContraFunctor (Arrw (~>) f g) where
+instance (Arrow j, Functor f, ContraFunctor g) => ContraFunctor (Arrw j f g) where
   contraFmap h = inArrw $ \ fga -> arr (fmap h) >>> fga >>> arr (contraFmap h)
 
 -- Restated,
