@@ -126,8 +126,8 @@ instance Zip Id where Id a `zip` Id b = Id (a,b)
 -- Standard instance, e.g., (~>) = (->)
 -- This one requires UndecidableInstances.  Alternatively, specialize to
 -- (->) and other arrows as desired.
-instance (Arrow (~>), Monoid_f (Flip (~>) o)) =>
-  Zip (Flip (~>) o) where zip = cozip
+instance (Arrow j, Monoid_f (Flip j o)) =>
+  Zip (Flip j o) where zip = cozip
 
 -- | Handy for 'Zip' instances
 apZip :: (Applicative h, Zip f) => ZipTy (h :. f)
@@ -139,12 +139,12 @@ ppZip = inO2 $ \ gfa gfb -> uncurry zip <$> (gfa `zip` gfb)
 
 -- | Ziping of 'Arrw' values.  /Warning/: definition uses 'arr', so only
 -- use if your arrow has a working 'arr'.
-arZip :: (Arrow (~>), Unzip f, Zip g) => ZipTy (Arrw (~>) f g)
+arZip :: (Arrow j, Unzip f, Zip g) => ZipTy (Arrw j f g)
 arZip = inArrw2 $ \ fga fgb ->
   arr unzip >>> fga***fgb >>> arr (uncurry zip)
 
 -- Standard instance
-instance (Arrow (~>), Unzip f, Zip g) => Zip (Arrw (~>) f g)
+instance (Arrow j, Unzip f, Zip g) => Zip (Arrw j f g)
   where zip = arZip
 
 instance (Zip f, Zip g) => Zip (f :*: g) where
@@ -206,7 +206,7 @@ instance Cozip (Const e) where
   cosnds = inConst id
 
 -- Standard instance for contravariant functors
-instance Arrow (~>) => Cozip (Flip (~>) o) where
+instance Arrow j => Cozip (Flip j o) where
   { cofsts = contraFmap fst ; cosnds = contraFmap snd }
 
 instance (Functor h, Cozip f) => Cozip (h :. f) where
