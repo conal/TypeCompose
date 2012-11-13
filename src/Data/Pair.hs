@@ -95,8 +95,8 @@ instance Pair Id where Id a `pair` Id b = Id (a,b)
 -- Standard instance, e.g., (~>) = (->)
 -- This one requires UndecidableInstances.  Alternatively, specialize to
 -- (->) and other arrows as desired.
-instance (Arrow (~>), Monoid_f (Flip (~>) o)) =>
-  Pair (Flip (~>) o) where pair = copair
+instance (Arrow j, Monoid_f (Flip j o)) =>
+  Pair (Flip j o) where pair = copair
 
 -- | Handy for 'Pair' instances
 apPair :: (Applicative h, Pair f) => PairTy (h :. f)
@@ -108,12 +108,12 @@ ppPair = inO2 $ \ gfa gfb -> uncurry pair <$> (gfa `pair` gfb)
 
 -- | Pairing of 'Arrw' values.  /Warning/: definition uses 'arr', so only
 -- use if your arrow has a working 'arr'.
-arPair :: (Arrow (~>), Unpair f, Pair g) => PairTy (Arrw (~>) f g)
+arPair :: (Arrow j, Unpair f, Pair g) => PairTy (Arrw j f g)
 arPair = inArrw2 $ \ fga fgb ->
   arr unpair >>> fga***fgb >>> arr (uncurry pair)
 
 -- Standard instance
-instance (Arrow (~>), Unpair f, Pair g) => Pair (Arrw (~>) f g)
+instance (Arrow j, Unpair f, Pair g) => Pair (Arrw j f g)
   where pair = arPair
 
 instance (Pair f, Pair g) => Pair (f :*: g) where
@@ -175,7 +175,7 @@ instance Copair (Const e) where
   cosnds = inConst id
 
 -- Standard instance for contravariant functors
-instance Arrow (~>) => Copair (Flip (~>) o) where
+instance Arrow j => Copair (Flip j o) where
   { cofsts = contraFmap fst ; cosnds = contraFmap snd }
 
 instance (Functor h, Copair f) => Copair (h :. f) where

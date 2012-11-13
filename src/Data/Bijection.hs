@@ -33,7 +33,7 @@ infix 8 :<->:
 infixr 2 --->
 
 -- | A type of bijective arrows
-data Bijection (~>) a b = Bi { biTo :: a ~> b, biFrom :: b ~> a }
+data Bijection j a b = Bi { biTo :: a `j` b, biFrom :: b `j` a }
 
 -- | Bijective functions
 type a :<->: b = Bijection (->) a b
@@ -41,20 +41,20 @@ type a :<->: b = Bijection (->) a b
 -- | Bijective identity arrow.  Warning: uses 'arr' on @(~>)@.  If you
 -- have no 'arr', but you have a @DeepArrow@, you can instead use @Bi idA
 -- idA@.
-idb :: Arrow (~>) => Bijection (~>) a a
+idb :: Arrow j => Bijection j a a
 idb = Bi idA idA where idA = arr id
 
 -- | Inverse bijection
-inverse :: Bijection (~>) a b -> Bijection (~>) b a
+inverse :: Bijection j a b -> Bijection j b a
 inverse (Bi ab ba) = Bi ba ab
 
 #if __GLASGOW_HASKELL__ >= 609
-instance Category (~>) => Category (Bijection (~>)) where
+instance Category j => Category (Bijection j) where
   id = Bi id id
   Bi bc cb . Bi ab ba = Bi (bc . ab) (ba . cb)
 #endif
 
-instance Arrow (~>) => Arrow (Bijection (~>)) where
+instance Arrow j => Arrow (Bijection j) where
 #if __GLASGOW_HASKELL__ < 609
   Bi ab ba >>> Bi bc cb = Bi (ab >>> bc) (cb >>> ba)
 #endif
@@ -75,8 +75,8 @@ bimap :: Functor f => (a :<->: b) -> (f a :<->: f b)
 bimap (Bi ab ba) = Bi (fmap ab) (fmap ba)
 
 -- | Bijections on arrows.
-(--->) :: Arrow (~>) => Bijection (~>) a b -> Bijection (~>) c d
-       -> (a ~> c) :<->: (b ~> d)
+(--->) :: Arrow j => Bijection j a b -> Bijection j c d
+       -> (a `j` c) :<->: (b `j` d)
 Bi ab ba ---> Bi cd dc = Bi (\ ac -> ba>>>ac>>>cd) (\ bd -> ab>>>bd>>>dc)
 
 -- TODO: Rewrite (--->) via (~>).  Currently would cause a module cycle
@@ -85,5 +85,5 @@ Bi ab ba ---> Bi cd dc = Bi (\ ac -> ba>>>ac>>>cd) (\ bd -> ab>>>bd>>>dc)
 
 
 -- | Apply a function in an alternative (monomorphic) representation.
-inBi :: Arrow (~>) => Bijection (~>) a b -> (a ~> a) -> (b ~> b)
+inBi :: Arrow j => Bijection j a b -> (a `j` a) -> (b `j` b)
 inBi (Bi to from) aa = from >>> aa >>> to

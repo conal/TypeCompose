@@ -93,13 +93,13 @@ instance (Lambda src snk, Lambda dom' ran')
 
 -- | 'lambda' with 'Arrw'.  /Warning/: definition uses 'arr', so only
 -- use if your arrow has a working 'arr'.
-arLambda :: (Arrow (~>), Unlambda f f', Lambda g g')
-      => LambdaTy (Arrw (~>) f g) (Arrw (~>) f' g')
+arLambda :: (Arrow j, Unlambda f f', Lambda g g')
+      => LambdaTy (Arrw j f g) (Arrw j f' g')
 arLambda = inArrw2 $ \ fga fgb ->
   arr unlambda >>> fga***fgb >>> arr (uncurry lambda)
 
-instance (Arrow (~>), Unlambda f f', Lambda g g')
-    => Lambda (Arrw (~>) f g) (Arrw (~>) f' g')
+instance (Arrow j, Unlambda f f', Lambda g g')
+    => Lambda (Arrw j f g) (Arrw j f' g')
   where lambda = arLambda
 
 
