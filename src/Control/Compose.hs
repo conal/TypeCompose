@@ -11,7 +11,7 @@
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Control.Compose
--- Copyright   :  (c) Conal Elliott 2007-2012
+-- Copyright   :  (c) Conal Elliott 2007-2013
 -- License     :  BSD3
 -- 
 -- Maintainer  :  conal@conal.net
@@ -36,7 +36,7 @@ module Control.Compose
   , (:.)(..), O, unO, biO, convO, coconvO, inO, inO2, inO3
   , oPure, oFmap, oLiftA2, oLiftA3
   , fmapFF, fmapCC, contraFmapFC, contraFmapCF
-  -- , DistribM(..), joinMM
+  , DistribM(..), joinDistribM
   , joinMMT, joinComposeT
   -- * Type composition
   -- ** Unary\/binary
@@ -80,7 +80,7 @@ import Data.Monoid
 import Data.Foldable
 import Data.Traversable
 import Control.Applicative
-import Control.Monad (join)
+import Control.Monad (join,liftM)
 
 -- import Test.QuickCheck -- for Endo
 
@@ -354,8 +354,6 @@ instance (Applicative g, Applicative f) => Applicative (g :. f) where
 
 
 
-{-
-
 -- A first pass at monad composition.  But now I've read "Composing
 -- Monads", and I know there's more to it.  At least four different ways,
 -- all with conflicting Monad instances.
@@ -366,26 +364,27 @@ instance (Applicative g, Applicative f) => Applicative (g :. f) where
 class DistribM m n where
   distribM :: n (m a) -> m (n a)
 
-instance (Monad m, Monad n, DistribM m n) => Monad (m :. n) where
-  return  = O . return . return
-  e >>= f = joinMM (liftM f e)
-
 -- | 'join' for @(m :. n)@
-joinMM :: (Monad m, Monad n, DistribM m n) =>
-          (m :. n) ((m :. n) a) -> (m :. n) a
-joinMM = O . liftM join . join . liftM distribM . unO . liftM unO
+joinDistribM :: (Monad m, Monad n, DistribM m n) =>
+                (m :. n) ((m :. n) a) -> (m :. n) a
+joinDistribM = O . liftM join . join . liftM distribM . (liftM.liftM) unO . unO
 
 -- Derivation:
 -- 
 --       (m :. n) ((m :. n) a)
---   --> m (n (m (n a)))      -- liftM unO
 --   --> m (n ((m :. n) a))   -- unO
+--   --> m (n (m (n a)))      -- (liftM.liftM) unO
 --   --> m (m (n (n a)))      -- liftM distribM
 --   --> m (n (n a))          -- join
 --   --> m (n a)              -- liftM join
 --   --> (m :. n) a           -- O
 
--}
+-- Template for specialization:
+-- 
+-- instance (Monad m, Monad n, DistribM m n) => Monad (m :. n) where
+--   return  = O . return . return
+--   e >>= f = joinDistribM (liftM f e)
+
 
 -- | 'join'-like function for implicitly composed monads
 joinMMT :: (Monad m, Monad n, Traversable n, Applicative m) =>
