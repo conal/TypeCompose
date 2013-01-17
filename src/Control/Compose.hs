@@ -36,7 +36,7 @@ module Control.Compose
   , (:.)(..), O, unO, biO, convO, coconvO, inO, inO2, inO3
   , oPure, oFmap, oLiftA2, oLiftA3
   , fmapFF, fmapCC, contraFmapFC, contraFmapCF
-  , DistribM(..), joinDistribM
+  , DistribM(..), joinDistribM, bindDistribM, returnDistribM
   , joinMMT, joinComposeT
   -- * Type composition
   -- ** Unary\/binary
@@ -364,7 +364,7 @@ instance (Applicative g, Applicative f) => Applicative (g :. f) where
 class DistribM m n where
   distribM :: n (m a) -> m (n a)
 
--- | 'join' for @(m :. n)@
+-- | A candidate 'join' for @(m :. n)@
 joinDistribM :: (Monad m, Monad n, DistribM m n) =>
                 (m :. n) ((m :. n) a) -> (m :. n) a
 joinDistribM = O . liftM join . join . liftM distribM . (liftM.liftM) unO . unO
@@ -379,12 +379,20 @@ joinDistribM = O . liftM join . join . liftM distribM . (liftM.liftM) unO . unO
 --   --> m (n a)              -- liftM join
 --   --> (m :. n) a           -- O
 
+-- | A candidate '(>>=)' for @(m :. n)@
+bindDistribM :: (Functor m, Functor n, Monad m, Monad n, DistribM m n) =>
+                (m :. n) a -> (a -> (m :. n) b) -> (m :. n) b
+mn `bindDistribM` f = joinDistribM (fmap f mn)
+
+returnDistribM :: (Monad m, Monad n) => a -> (m :. n) a
+returnDistribM = O . return . return
+
 -- Template for specialization:
 -- 
--- instance (Monad m, Monad n, DistribM m n) => Monad (m :. n) where
---   return  = O . return . return
---   e >>= f = joinDistribM (liftM f e)
-
+-- instance (Functor m, Functor n, Monad m, Monad n, DistribM m n) 
+--       => Monad (m :. n) where
+--   return = returnDistribM
+--   (>>=)  = bindDistribM
 
 -- | 'join'-like function for implicitly composed monads
 joinMMT :: (Monad m, Monad n, Traversable n, Applicative m) =>
