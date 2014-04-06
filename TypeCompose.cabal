@@ -1,5 +1,5 @@
 Name:                TypeCompose
-Version:             0.9.9
+Version:             0.9.10
 Synopsis: 	     Type composition classes & instances
 Category:            Composition, Control
 Cabal-Version:       >= 1.6
@@ -40,3 +40,5 @@ Library
   ghc-options:         -Wall
 
   -- TODO: eliminate Pair or Zip
+
+--  ghc-prof-options:    -prof -auto-all 

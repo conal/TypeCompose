@@ -904,10 +904,12 @@ inConst3 f (Const a) = inConst2 (f a)
 
 ---- For Control.Applicative.Endo
 
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
 -- deriving instance Monoid o => Monoid (Const o a)
 instance Monoid o => Monoid (Const o a) where
   mempty  = Const mempty
   mappend = inConst2 mappend
+#endif
 
 -- newtype Endo a = Endo { appEndo :: a -> a }
 
