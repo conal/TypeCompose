@@ -25,7 +25,7 @@ source-repository head
 
 Library
   Hs-Source-Dirs:      src
-  Build-Depends:       base<5
+  Build-Depends:       base<5, base-orphans
   Exposed-Modules:     
                        Data.Bijection
                        Data.CxMonoid
