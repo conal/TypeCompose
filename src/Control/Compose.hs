@@ -6,8 +6,6 @@
 -- For ghc 6.6 compatibility
 -- {-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
 
-{-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
-
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Control.Compose
@@ -76,6 +74,7 @@ import Control.Arrow
                       hiding (pure)
 #endif
 
+import Data.Orphans ()
 import Data.Monoid
 import Data.Foldable
 import Data.Traversable
@@ -904,12 +903,7 @@ inConst3 f (Const a) = inConst2 (f a)
 
 ---- For Control.Applicative.Endo
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
 -- deriving instance Monoid o => Monoid (Const o a)
-instance Monoid o => Monoid (Const o a) where
-  mempty  = Const mempty
-  mappend = inConst2 mappend
-#endif
 
 -- newtype Endo a = Endo { appEndo :: a -> a }
 
