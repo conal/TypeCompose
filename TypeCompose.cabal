@@ -10,7 +10,7 @@ Description:
   Please see the project wiki page: <http://haskell.org/haskellwiki/TypeCompose>
   .
   Copyright 2007-2012 by Conal Elliott; BSD3 license.
-Author:              Conal Elliott 
+Author:              Conal Elliott
 Maintainer:          conal@conal.net
 Homepage:            https://github.com/conal/TypeCompose
 Copyright:           (c) 2007-2013 by Conal Elliott
@@ -25,8 +25,8 @@ source-repository head
 
 Library
   Hs-Source-Dirs:      src
-  Build-Depends:       base<5, base-orphans
-  Exposed-Modules:     
+  Build-Depends:       base<5, base-orphans >= 0.5
+  Exposed-Modules:
                        Data.Bijection
                        Data.CxMonoid
                        Data.RefMonad
@@ -41,4 +41,4 @@ Library
 
   -- TODO: eliminate Pair or Zip
 
---  ghc-prof-options:    -prof -auto-all 
+--  ghc-prof-options:    -prof -auto-all
