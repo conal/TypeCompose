@@ -3,6 +3,9 @@
            , TypeOperators, GeneralizedNewtypeDeriving, StandaloneDeriving
            , CPP
   #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# Language DeriveGeneric #-}
+#endif
 -- For ghc 6.6 compatibility
 -- {-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
 
@@ -63,6 +66,14 @@ module Control.Compose
   , biConst, inConst, inConst2, inConst3
   , biEndo, inEndo
   ) where
+
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+import GHC.Generics ( Generic )
+#endif
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+import GHC.Generics ( Generic1 )
+#endif
 
 #if __GLASGOW_HASKELL__ >= 609
 import Control.Category
@@ -203,7 +214,14 @@ someday Haskell will do Prolog-style search for instances, subgoaling the
 constraints, rather than just matching instance heads.
 
 -}
-newtype (g :. f) a = O (g (f a)) deriving (Eq,Show)
+newtype (g :. f) a = O (g (f a)) deriving ( Eq, Show, Ord
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+                                          , Generic
+#endif
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+                                          , Generic1
+#endif
+                                          )
 
 -- newtype (g :. f) a = O { unO :: g (f a) } deriving Show
 
@@ -638,7 +656,14 @@ instance (Applicative f, Monoid m) => Monoid (App f m) where
 -- | Identity type constructor.  Until there's a better place to find it.
 -- I'd use "Control.Monad.Identity", but I don't want to introduce a
 -- dependency on mtl just for Id.
-newtype Id a = Id a deriving Show
+newtype Id a = Id a deriving ( Eq, Show, Ord
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+                             , Generic
+#endif
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+                             , Generic1
+#endif
+                             )
 
 -- Could define record field:
 -- 
