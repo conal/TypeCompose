@@ -87,6 +87,7 @@ import Control.Arrow
 
 import Data.Orphans ()
 import Data.Monoid
+import qualified Data.Semigroup as Sem
 import Data.Foldable
 import Data.Traversable
 import Control.Applicative
@@ -592,10 +593,12 @@ inFlip3 f (Flip ar) = inFlip2 (f ar)
 instance Arrow arr => ContraFunctor (Flip arr b) where
   contraFmap h (Flip f) = Flip (arr h >>> f)
 
+instance (Applicative (j a), Sem.Semigroup o) => Sem.Semigroup (Flip j o a) where
+  (<>) = inFlip2 (liftA2 (Sem.<>))
+
 -- Useful for (~>) = (->).  Maybe others.
 instance (Applicative (j a), Monoid o) => Monoid (Flip j o a) where
   mempty  = Flip (pure mempty)
-  mappend = inFlip2 (liftA2 mappend)
 
 -- TODO: generalize (->) to (~>) with Applicative_f (~>)
 instance Monoid o => Monoid_f (Flip (->) o) where
@@ -642,9 +645,11 @@ inApp2 :: (f a -> f' a' -> f'' a'') -> (App f a -> App f' a' -> App f'' a'')
 inApp2 h (App fa) = inApp (h fa)
 
 -- Example: App IO ()
+instance (Applicative f, Sem.Semigroup m) => Sem.Semigroup (App f m) where
+  (<>) = inApp2 (liftA2 (Sem.<>))
+
 instance (Applicative f, Monoid m) => Monoid (App f m) where
   mempty  =   App  (pure   mempty )
-  mappend = inApp2 (liftA2 mappend)
 
 --  App a `mappend` App b = App (liftA2 mappend a b)
 
@@ -848,6 +853,7 @@ newtype Arrw j f g a = Arrw { unArrw :: f a `j` g a } -- deriving Monoid
 
 -- For ghc-6.6, use the "deriving" above, but for 6.8 use the "deriving" below.
 
+deriving instance Sem.Semigroup (f a `j` g a) => Sem.Semigroup (Arrw j f g a)
 deriving instance Monoid (f a `j` g a) => Monoid (Arrw j f g a)
 
 -- Replace with generalized bijection?

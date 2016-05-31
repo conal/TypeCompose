@@ -16,6 +16,7 @@
 module Data.CxMonoid (MonoidDict, CxMonoid(..), biCxMonoid) where
 
 import Data.Monoid (Monoid(..))
+import qualified Data.Semigroup as Sem
 
 import Data.Bijection
 import Data.Title
@@ -30,10 +31,12 @@ newtype CxMonoid a = CxMonoid { unCxMonoid :: MonoidDict a -> a }
 biCxMonoid :: (MonoidDict a -> a) :<->: CxMonoid a
 biCxMonoid = Bi CxMonoid unCxMonoid
 
+instance Sem.Semigroup (CxMonoid a) where
+  CxMonoid f <> CxMonoid g  =
+    CxMonoid (\ md@(_,op) -> f md `op` g md)
+
 instance Monoid (CxMonoid a) where
   mempty = CxMonoid (\ (e,_) -> e)
-  CxMonoid f `mappend` CxMonoid g  =
-    CxMonoid (\ md@(_,op) -> f md `op` g md)
 
 -- Exploit the function instance of 'Title'
 instance Title a => Title (CxMonoid a) where
