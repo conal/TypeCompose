@@ -89,7 +89,6 @@ import Data.Orphans ()
 import Data.Monoid
 import qualified Data.Semigroup as Sem
 import Data.Foldable
-import Data.Traversable
 import Control.Applicative
 import Control.Monad (join,liftM)
 
@@ -599,6 +598,7 @@ instance (Applicative (j a), Sem.Semigroup o) => Sem.Semigroup (Flip j o a) wher
 -- Useful for (~>) = (->).  Maybe others.
 instance (Applicative (j a), Monoid o) => Monoid (Flip j o a) where
   mempty  = Flip (pure mempty)
+  mappend = (<>)
 
 -- TODO: generalize (->) to (~>) with Applicative_f (~>)
 instance Monoid o => Monoid_f (Flip (->) o) where
@@ -650,6 +650,7 @@ instance (Applicative f, Sem.Semigroup m) => Sem.Semigroup (App f m) where
 
 instance (Applicative f, Monoid m) => Monoid (App f m) where
   mempty  =   App  (pure   mempty )
+  mappend = (<>)
 
 --  App a `mappend` App b = App (liftA2 mappend a b)
 
