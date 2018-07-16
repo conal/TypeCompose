@@ -37,6 +37,7 @@ instance Sem.Semigroup (CxMonoid a) where
 
 instance Monoid (CxMonoid a) where
   mempty = CxMonoid (\ (e,_) -> e)
+  mappend = (Sem.<>)
 
 -- Exploit the function instance of 'Title'
 instance Title a => Title (CxMonoid a) where
