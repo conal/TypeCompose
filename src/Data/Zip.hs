@@ -5,6 +5,8 @@
 #else
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 #endif
+{-# OPTIONS_GHC -Wno-inline-rule-shadowing #-}
+
 
 ----------------------------------------------------------------------
 -- |
