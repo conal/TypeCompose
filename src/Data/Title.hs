@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, OverlappingInstances, TypeOperators, TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances #-}
 {-# OPTIONS_GHC -Wall #-}
 ----------------------------------------------------------------------
 -- |
@@ -40,7 +40,8 @@ class Title_f f where
 
 instance Title_f g => Title_f (g :. f) where title_f str = inO (title_f str)
 
-instance Title_f f => Title (f a) where title = title_f
+instance {-# OVERLAPPABLE #-} Title_f f => Title (f a) where
+  title = title_f
 
 instance Title String where
   title ttl str = (ttl ++ suffix ++ str)
