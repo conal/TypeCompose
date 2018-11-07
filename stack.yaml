@@ -1,0 +1,4 @@
+resolver: lts-9.20 # ghc-8.0.2
+
+flags: {}
+
