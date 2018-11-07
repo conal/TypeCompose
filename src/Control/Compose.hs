@@ -6,6 +6,9 @@
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# Language DeriveGeneric #-}
 #endif
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
+{-# Language KindSignatures, PolyKinds #-}
+#endif
 -- For ghc 6.6 compatibility
 -- {-# OPTIONS -fglasgow-exts -fallow-undecidable-instances #-}
 
@@ -214,7 +217,12 @@ someday Haskell will do Prolog-style search for instances, subgoaling the
 constraints, rather than just matching instance heads.
 
 -}
-newtype (g :. f) a = O (g (f a)) deriving ( Eq, Show, Ord
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
+newtype ((g :: k2 -> *) :. (f :: k1 -> k2)) (a :: k1)
+#else
+newtype (g :. f) a
+#endif
+  = O (g (f a)) deriving ( Eq, Show, Ord
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
                                           , Generic
 #endif
