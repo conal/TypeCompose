@@ -40,9 +40,9 @@ module Data.Zip
   -- * Zippings
     ZipTy, Zip(..), zipWith, zipWith3
   , apZip, ppZip, arZip
-  -- * Unzipings
+  -- * Unzippings
   , UnzipTy, Unzip(..)
-  -- * Dual unzipings
+  -- * Dual unzippings
   , Cozip(..), cozip
   -- * Misc
   , pairEdit, pairEditM
@@ -139,7 +139,7 @@ apZip = inO2 (liftA2 zip)
 ppZip :: (Functor g, Zip g, Zip f) => ZipTy (g :. f)
 ppZip = inO2 $ \ gfa gfb -> uncurry zip <$> (gfa `zip` gfb)
 
--- | Ziping of 'Arrw' values.  /Warning/: definition uses 'arr', so only
+-- | Zipping of 'Arrow' values.  /Warning/: definition uses 'arr', so only
 -- use if your arrow has a working 'arr'.
 arZip :: (Arrow j, Unzip f, Zip g) => ZipTy (Arrw j f g)
 arZip = inArrw2 $ \ fga fgb ->
@@ -154,7 +154,7 @@ instance (Zip f, Zip g) => Zip (f :*: g) where
 
 
 {----------------------------------------------------------
-    Unzipings
+    Unzippings
 ----------------------------------------------------------}
 
 -- | Type of 'unzip' method.  Generalizes 'Prelude.unzip'.
@@ -188,7 +188,7 @@ instance Unzip Id        where { fsts = fmap fst; snds = fmap snd }
 
 
 {----------------------------------------------------------
-    Dual unzipings
+    Dual unzippings
 ----------------------------------------------------------}
 
 -- | Dual to 'Unzip'.
@@ -219,7 +219,7 @@ instance (Cozip f, Cozip g) => Cozip (f :*: g) where
   cofsts = inProd (cofsts *** cofsts)
   cosnds = inProd (cosnds *** cosnds)
 
--- | Ziping of 'Cozip' values.  Combines contribution of each.
+-- | Zipping of 'Cozip' values.  Combines contribution of each.
 cozip :: (Cozip f, Monoid_f f) => ZipTy f
 fa `cozip` fb = cofsts fa `mappend_f` cosnds fb
 
