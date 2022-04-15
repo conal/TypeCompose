@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, TypeOperators, UndecidableInstances, CPP #-}
+{-# LANGUAGE FlexibleContexts, Rank2Types, TypeOperators, UndecidableInstances, CPP #-}
 {-# OPTIONS_GHC -Wall #-}
 #if __GLASGOW_HASKELL__ < 610
 {-# OPTIONS_GHC -frewrite-rules #-}
@@ -13,24 +13,24 @@
 -- Module      :  Data.Zip
 -- Copyright   :  (c) Conal Elliott 2007
 -- License     :  BSD3
--- 
+--
 -- Maintainer  :  conal@conal.net
 -- Stability   :  experimental
 -- Portability :  GHC
--- 
+--
 -- Zip-related type constructor classes.
--- 
+--
 -- This module is similar to @Control.Functor.Zip@ in the
 -- @category-extras@ package, but it does not require a 'Functor'
 -- superclass.
--- 
+--
 -- This module defines generalized 'zip' and 'unzip', so if you use it,
 -- you'll have to
 --
 -- @
 --    import Prelude hiding (zip,zipWith,zipWith3,unzip)
 -- @
--- 
+--
 -- Temporarily, there is also Data.Pair, which contains the same
 -- functionality with different naming.  I'm unsure which I prefer.
 ----------------------------------------------------------------------
@@ -71,7 +71,7 @@ type ZipTy f = forall a b. f a -> f b -> f (a,b)
 -- Here are some standard instance templates you can fill in.  They're not
 -- defined in the general forms below, because they would lead to a lot of
 -- overlap.
--- 
+--
 -- >    instance Applicative f => Zip f where
 -- >        zip = liftA2 (,)
 -- >    instance (Applicative h, Zip f) => Zip (h :. f) where
@@ -82,12 +82,12 @@ type ZipTy f = forall a b. f a -> f b -> f (a,b)
 -- >        zip = arZip
 -- >    instance (Monoid_f h, Cozip h) => Zip h where
 -- >        zip = cozip
--- 
+--
 -- Also, if you have a type constructor that's a 'Functor' and a 'Zip',
 -- here is a way to define '(<*>)' for 'Applicative':
--- 
+--
 -- >    (<*>) = zipWith ($)
--- 
+--
 -- Minimum definitions for instances.
 
 class Zip f where
@@ -163,7 +163,7 @@ type UnzipTy f = forall a b. f (a,b) -> (f a, f b)
 -- | Unzippable.  Minimal instance definition: either (a) 'unzip' /or/ (b)
 -- both of 'fsts' /and/ 'snds'.  A standard template to substitute any
 -- 'Functor' @f.@ But watch out for effects!
--- 
+--
 -- >     instance Functor f => Unzip f where {fsts = fmap fst; snds = fmap snd}
 
 class Unzip f where
@@ -178,7 +178,7 @@ class Unzip f where
 instance Unzip [] where
   unzip = Prelude.unzip       -- single pass. don't use default
   fsts  = fmap fst
-  snds  = fmap snd 
+  snds  = fmap snd
 
 -- Some standard instances for functors
 instance Unzip ((->) a)  where { fsts = fmap fst; snds = fmap snd }
@@ -194,8 +194,8 @@ instance Unzip Id        where { fsts = fmap fst; snds = fmap snd }
 -- | Dual to 'Unzip'.
 -- Especially handy for contravariant functors ('Cofunctor') .  Use this
 -- template (filling in @f@) :
--- 
--- 
+--
+--
 -- >    instance Cofunctor f => Cozip f where
 -- >      { cofsts = cofmap fst ; cosnds = cofmap snd }
 
