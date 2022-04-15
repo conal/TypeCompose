@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, TypeOperators, UndecidableInstances, CPP #-}
+{-# LANGUAGE FlexibleContexts, Rank2Types, TypeOperators, UndecidableInstances, CPP #-}
 {-# OPTIONS_GHC -Wall #-}
 #if __GLASGOW_HASKELL__ < 610
 {-# OPTIONS_GHC -frewrite-rules #-}
@@ -11,17 +11,17 @@
 -- Module      :  Data.Pair
 -- Copyright   :  (c) Conal Elliott 2007
 -- License     :  BSD3
--- 
+--
 -- Maintainer  :  conal@conal.net
 -- Stability   :  experimental
 -- Portability :  GHC
--- 
+--
 -- Pair-related type constructor classes.
--- 
+--
 -- This module is similar to @Control.Functor.Pair@ in the
 -- @category-extras@ package, but it does not require a 'Functor'
 -- superclass.
--- 
+--
 -- Temporarily, there is also Data.Zip, which contains the same
 -- functionality with different naming.  I'm unsure which I prefer.
 ----------------------------------------------------------------------
@@ -59,7 +59,7 @@ type PairTy f = forall a b. f a -> f b -> f (a,b)
 -- Here are some standard instance templates you can fill in.  They're not
 -- defined in the general forms below, because they would lead to a lot of
 -- overlap.
--- 
+--
 -- >    instance Applicative f => Pair f where
 -- >        pair = liftA2 (,)
 -- >    instance (Applicative h, Pair f) => Pair (h :. f) where
@@ -70,12 +70,12 @@ type PairTy f = forall a b. f a -> f b -> f (a,b)
 -- >        pair = arPair
 -- >    instance (Monoid_f h, Copair h) => Pair h where
 -- >        pair = copair
--- 
+--
 -- Also, if you have a type constructor that's a 'Functor' and a 'Pair',
 -- here is a way to define '(<*>)' for 'Applicative':
--- 
+--
 -- >    (<*>) = pairWith ($)
--- 
+--
 -- Minimum definitions for instances.
 
 class Pair f where
@@ -130,7 +130,7 @@ type UnpairTy f = forall a b. f (a,b) -> (f a, f b)
 -- | Unpairpable.  Minimal instance definition: either (a) 'unpair' /or/ (b)
 -- both of 'fsts' /and/ 'snds'.  A standard template to substitute any
 -- 'Functor' @f.@ But watch out for effects!
--- 
+--
 -- >     instance Functor f => Unpair f where {fsts = fmap fst; snds = fmap snd}
 
 class Unpair f where
@@ -145,7 +145,7 @@ class Unpair f where
 instance Unpair [] where
   unpair = unzip       -- single pass. don't use default
   fsts  = fmap fst
-  snds  = fmap snd 
+  snds  = fmap snd
 
 -- Some standard instances for functors
 instance Unpair ((->) a)  where { fsts = fmap fst; snds = fmap snd }
@@ -161,8 +161,8 @@ instance Unpair Id        where { fsts = fmap fst; snds = fmap snd }
 -- | Dual to 'Unpair'.
 -- Especially handy for contravariant functors ('ContraFunctor') .  Use this
 -- template (filling in @f@) :
--- 
--- 
+--
+--
 -- >    instance ContraFunctor f => Copair f where
 -- >      { cofsts = cofmap fst ; cosnds = cofmap snd }
 
